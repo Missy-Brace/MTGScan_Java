@@ -1,64 +1,122 @@
 package com.example.mtg_java;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.TextView;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link CollectionFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.mtg_java.model.Group;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class CollectionFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private RecyclerView recycler;
+    private TextView txtEmpty;
+    private GroupAdapter adapter;
+    private List<Group> groups = new ArrayList<>();
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    public CollectionFragment() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment CollectionFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static CollectionFragment newInstance(String param1, String param2) {
-        CollectionFragment fragment = new CollectionFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
+    @Nullable
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_collection, container, false);
+
+        recycler = view.findViewById(R.id.recyclerGroups);
+        txtEmpty = view.findViewById(R.id.txtEmpty);
+
+        adapter = new GroupAdapter(groups, new GroupAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(Group group) {
+                // what happens when a group is clicked
+            }
+
+            @Override
+            public void onMoreClick(Group group, View view) {
+                // what happens when the "more" button is clicked
+            }
+        });
+
+
+        recycler.setLayoutManager(new LinearLayoutManager(getContext()));
+        recycler.setAdapter(adapter);
+
+        view.findViewById(R.id.btnAdd).setOnClickListener(v -> showCreateDialog());
+
+        loadGroups();
+
+        return view;
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_collection, container, false);
+    private void loadGroups() {
+        // TODO: load from storage or API
+        // For demo, empty list
+        updateUI();
+    }
+
+    private void updateUI() {
+        adapter.setGroups(groups);
+        txtEmpty.setVisibility(groups.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    private void showCreateDialog() {
+        EditText input = new EditText(getContext());
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        new AlertDialog.Builder(getContext())
+                .setTitle("New Collection")
+                .setView(input)
+                .setPositiveButton("Create", (dialog, which) -> {
+                    String name = input.getText().toString().trim();
+                    if (!name.isEmpty()) {
+                        Group g = new Group(name);
+                        groups.add(g);
+                        updateUI();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showGroupOptions(Group group) {
+        String[] options = {"Rename", "Delete"};
+        new AlertDialog.Builder(getContext())
+                .setTitle(group.getName())
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) showRenameDialog(group);
+                    else if (which == 1) {
+                        groups.remove(group);
+                        updateUI();
+                    }
+                })
+                .show();
+    }
+
+    private void showRenameDialog(Group group) {
+        EditText input = new EditText(getContext());
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setText(group.getName());
+        new AlertDialog.Builder(getContext())
+                .setTitle("Rename Collection")
+                .setView(input)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    String name = input.getText().toString().trim();
+                    if (!name.isEmpty()) {
+                        group.setName(name);
+                        updateUI();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 }
