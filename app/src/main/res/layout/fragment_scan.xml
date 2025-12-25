@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@android:color/black"
+    android:paddingTop="16dp">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Scan"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white" />
+
+        <ImageView
+            android:id="@+id/btnSearch"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_search"
+            android:padding="12dp"
+            android:contentDescription="Search"
+            android:clickable="true"
+            android:focusable="true"
+            app:tint="@android:color/white" />
+    </LinearLayout>
+
+    <!-- Spacer -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="20dp" />
+
+    <!-- Camera container -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="500dp"
+        android:layout_marginHorizontal="16dp"
+        android:background="@drawable/bg_camera_rounded">
+
+        <androidx.camera.view.PreviewView
+            android:id="@+id/previewView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <View
+            android:id="@+id/cardOverlay"
+            android:layout_width="320dp"
+            android:layout_height="280dp"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_marginTop="120dp"
+            android:background="@drawable/overlay_frame" />
+
+
+    </FrameLayout>
+
+
+
+
+    <!-- Helper text -->
+
+    <!-- Gallery button -->
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:padding="16dp"
+        android:text="Align your card in the frame to scan automatically."
+        android:textColor="#BBBBBB" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="10dp"
+
+        android:text="Choose from Gallery" />
+
+</LinearLayout>
