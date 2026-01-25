@@ -19,17 +19,19 @@ public class LoginActivity extends AppCompatActivity {
     private Button btnLogin, btnGoSignup;
     private ProgressBar progressBar;
 
-    private AuthManager authManager; // a class to handle login/register logic
+    private AuthManager authManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        SessionManager session = new SessionManager(this);
-        if (session.isLoggedIn()) {
-            // user is already logged in, go straight to main screen
-            startActivity(new Intent(LoginActivity.this, MainActivity.class));
-            finish(); // prevent going back to login
-        }
+
+        // ✅ check session FIRST
+        SessionManager sessionManager = new SessionManager(this);
+        //if (sessionManager.isLoggedIn()) {
+          //  startActivity(new Intent(LoginActivity.this, MainActivity.class));
+            //finish();
+            //return;
+        //}
 
         setContentView(R.layout.activity_login);
 
@@ -42,9 +44,10 @@ public class LoginActivity extends AppCompatActivity {
         authManager = new AuthManager(this);
 
         btnLogin.setOnClickListener(v -> handleLogin());
-        btnGoSignup.setOnClickListener(v -> {
-            startActivity(new Intent(LoginActivity.this, SignupActivity.class));
-        });
+
+        btnGoSignup.setOnClickListener(v ->
+                startActivity(new Intent(LoginActivity.this, SignupActivity.class))
+        );
     }
 
     private void handleLogin() {
@@ -57,17 +60,21 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         progressBar.setVisibility(View.VISIBLE);
+
         authManager.login(email, password, new AuthManager.AuthCallback() {
+
+            // ✅ FIXED: correct method signature
             @Override
-            public void onSuccess() {
+            public void onSuccess(String token, String userId) {
                 progressBar.setVisibility(View.GONE);
-                // Go to main app screen
-                SessionManager session = new SessionManager(LoginActivity.this);
-                session.setLoggedIn(true);
+
+                // Session already saved in AuthManager,
+                // but keeping this is safe
+                SessionManager sessionManager = new SessionManager(LoginActivity.this);
+                sessionManager.setLoggedIn(true);
 
                 startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 finish();
-
             }
 
             @Override

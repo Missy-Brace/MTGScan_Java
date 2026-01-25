@@ -42,18 +42,25 @@ public class SignupActivity extends AppCompatActivity {
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
-        if (TextUtils.isEmpty(username) || TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
+        if (TextUtils.isEmpty(username) ||
+                TextUtils.isEmpty(email) ||
+                TextUtils.isEmpty(password)) {
             Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show();
             return;
         }
 
         progressBar.setVisibility(View.VISIBLE);
+
         authManager.register(username, email, password, new AuthManager.AuthCallback() {
+
+            // ✅ FIXED
             @Override
-            public void onSuccess() {
+            public void onSuccess(String token, String userId) {
                 progressBar.setVisibility(View.GONE);
-                Toast.makeText(SignupActivity.this, "Signup successful", Toast.LENGTH_SHORT).show();
-                // Auto login
+                Toast.makeText(SignupActivity.this,
+                        "Signup successful",
+                        Toast.LENGTH_SHORT).show();
+
                 startActivity(new Intent(SignupActivity.this, MainActivity.class));
                 finish();
             }

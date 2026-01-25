@@ -23,9 +23,25 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
     private Context context;
     private List<Card> cardList;
 
+    // 🔹 ADDED
+    private OnCardClickListener listener;
+
+    // 🔹 ADDED interface
+    public interface OnCardClickListener {
+        void onCardClick(Card card);
+    }
+
+    // 🔹 EXISTING constructor (unchanged)
     public CardAdapter(Context context, List<Card> cardList) {
         this.context = context;
         this.cardList = cardList;
+    }
+
+    // 🔹 ADDED new constructor (do NOT remove old one)
+    public CardAdapter(Context context, List<Card> cardList, OnCardClickListener listener) {
+        this.context = context;
+        this.cardList = cardList;
+        this.listener = listener;
     }
 
     @NonNull
@@ -44,10 +60,17 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
             Glide.with(context).load(card.getImageUrl()).into(holder.imgCard);
         }
 
+        // 🔹 KEEP original behavior
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, CardDetailActivity.class);
-            intent.putExtra("CARD_ID", card.getUniversalId());
-            context.startActivity(intent);
+            if (listener != null) {
+                // NEW: send card back
+                listener.onCardClick(card);
+            } else {
+                // OLD: open detail screen
+                Intent intent = new Intent(context, CardDetailActivity.class);
+                intent.putExtra("CARD_ID", card.getUniversalId());
+                context.startActivity(intent);
+            }
         });
     }
 

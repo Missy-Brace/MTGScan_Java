@@ -45,6 +45,7 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
     public void onBindViewHolder(@NonNull GroupViewHolder holder, int position) {
         Group group = groups.get(position);
         holder.txtName.setText(group.getName());
+        holder.txtCardCount.setText(group.getCardCount() + " cards");
         holder.itemView.setOnClickListener(v -> listener.onItemClick(group));
         holder.btnMore.setOnClickListener(v -> listener.onMoreClick(group, v));
     }
@@ -55,12 +56,13 @@ public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.GroupViewHol
     }
 
     static class GroupViewHolder extends RecyclerView.ViewHolder {
-        TextView txtName;
+        TextView txtName, txtCardCount;
         ImageButton btnMore;
 
         public GroupViewHolder(@NonNull View itemView) {
             super(itemView);
             txtName = itemView.findViewById(R.id.txtGroupName);
+            txtCardCount = itemView.findViewById(R.id.txtCardCount);
             btnMore = itemView.findViewById(R.id.btnMore);
         }
     }

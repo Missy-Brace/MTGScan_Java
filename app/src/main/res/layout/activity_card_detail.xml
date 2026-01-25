@@ -1,84 +1,128 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:orientation="vertical"
+    android:background="@android:color/black">
 
-    <LinearLayout
-        android:orientation="vertical"
+    <!-- TOOLBAR -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@android:color/black"
+        app:titleTextColor="@android:color/white"
+        app:navigationIconTint="@color/orange"
+        app:itemIconTint="@color/orange" />
 
-        <!-- Card Image on top -->
-        <ImageView
-            android:id="@+id/imgCard"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:paddingBottom="16dp"
-            android:scaleType="fitCenter" />
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-        <!-- Card Name -->
-        <TextView
-            android:id="@+id/txtName"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Card Name"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:paddingBottom="8dp"/>
+            android:orientation="vertical"
+            android:padding="16dp">
 
-        <TextView
-            android:id="@+id/txtType"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Creature — Elf Warrior"
-            android:textSize="16sp"
-            android:paddingBottom="8dp"/>
+            <ImageView
+                android:id="@+id/imgCard"
+                android:layout_width="match_parent"
+                android:layout_height="280dp"
+                android:scaleType="fitCenter"
+                android:layout_marginBottom="16dp" />
 
-        <TextView
-            android:id="@+id/txtMana"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Mana Cost: {1}{G} &amp; {U}"
-            android:textSize="16sp"
-            android:paddingBottom="8dp"/>
+            <TextView
+                android:id="@+id/txtName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                android:layout_marginBottom="8dp" />
 
-        <TextView
-            android:id="@+id/txtText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Some ability text"
-            android:textSize="16sp"
-            android:paddingBottom="8dp"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:background="@drawable/bg_card_dark"
+                android:layout_marginBottom="16dp">
 
-        <TextView
-            android:id="@+id/txtStats"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Power / Toughness"
-            android:textSize="16sp"
-            android:paddingBottom="8dp"/>
+                <TextView
+                    android:text="Basic"
+                    android:textColor="@color/orange"
+                    android:textStyle="bold"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
 
-        <TextView
-            android:id="@+id/txtPrice"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Price: $3.50"
-            android:textSize="16sp"
-            android:paddingBottom="8dp"/>
+                <TextView
+                    android:id="@+id/txtType"
+                    android:textColor="@android:color/white"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
 
-        <ImageButton
-            android:id="@+id/btnFlip"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@android:drawable/ic_menu_rotate"
-            android:contentDescription="Flip Card"
-            android:padding="8dp"/>
+                <TextView
+                    android:id="@+id/txtMana"
+                    android:textColor="@android:color/white"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
 
-        <ProgressBar
-            android:id="@+id/progress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone"/>
-    </LinearLayout>
-</ScrollView>
+                <TextView
+                    android:id="@+id/txtStats"
+                    android:textColor="@android:color/white"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:background="@drawable/bg_card_dark"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:text="Card Text"
+                    android:textColor="@color/orange"
+                    android:textStyle="bold"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
+                <TextView
+                    android:id="@+id/txtText"
+                    android:textColor="@android:color/white"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/txtPrice"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:layout_marginBottom="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <ImageButton
+                android:id="@+id/btnFlip"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@android:drawable/ic_menu_rotate"
+                android:background="@android:color/transparent"
+                app:tint="@color/orange"
+                android:layout_gravity="center" />
+
+            <ProgressBar
+                android:id="@+id/progress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>
