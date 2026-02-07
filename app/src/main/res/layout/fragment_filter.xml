@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- Name -->
+        <EditText
+            android:id="@+id/fName"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="Name"
+            android:textColor="@android:color/white"
+            android:textColorHint="#888"/>
+
+        <!-- Text -->
+        <EditText
+            android:id="@+id/fText"
+            android:layout_width="match_parent"
+            android:layout_height="90dp"
+            android:hint="Text"
+            android:textColor="@android:color/white"
+            android:textColorHint="#888"/>
+
+        <!-- Type -->
+        <EditText
+            android:id="@+id/fType"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="Type"
+            android:textColor="@android:color/white"
+            android:textColorHint="#888"/>
+
+        <!-- Colors -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Colors"
+            android:textColor="@android:color/white"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ToggleButton android:id="@+id/cW" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="W" android:textOff="W"/>
+            <ToggleButton android:id="@+id/cU" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="U" android:textOff="U"/>
+            <ToggleButton android:id="@+id/cB" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="B" android:textOff="B"/>
+            <ToggleButton android:id="@+id/cR" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="R" android:textOff="R"/>
+            <ToggleButton android:id="@+id/cG" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="G" android:textOff="G"/>
+        </LinearLayout>
+
+        <!-- Color Identity -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Color Identity"
+            android:textColor="@android:color/white"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ToggleButton android:id="@+id/idW" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="W" android:textOff="W"/>
+            <ToggleButton android:id="@+id/idU" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="U" android:textOff="U"/>
+            <ToggleButton android:id="@+id/idB" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="B" android:textOff="B"/>
+            <ToggleButton android:id="@+id/idR" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="R" android:textOff="R"/>
+            <ToggleButton android:id="@+id/idG" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="G" android:textOff="G"/>
+        </LinearLayout>
+
+        <!-- Mana -->
+        <EditText
+            android:id="@+id/fMana"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="Mana Cost (CMC)"
+            android:inputType="number"
+            android:textColor="@android:color/white"
+            android:textColorHint="#888"/>
+
+        <!-- Rarity -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Rarity"
+            android:textColor="@android:color/white"/>
+
+        <ToggleButton android:id="@+id/rCommon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="Common" android:textOff="Common"/>
+        <ToggleButton android:id="@+id/rUncommon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="Uncommon" android:textOff="Uncommon"/>
+        <ToggleButton android:id="@+id/rRare" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="Rare" android:textOff="Rare"/>
+        <ToggleButton android:id="@+id/rMythic" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="Mythic" android:textOff="Mythic"/>
+
+        <!-- Artist -->
+        <EditText
+            android:id="@+id/fArtist"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="Artist"
+            android:textColor="@android:color/white"
+            android:textColorHint="#888"/>
+
+        <Button
+            android:id="@+id/btnApply"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Search"/>
+    </LinearLayout>
+</ScrollView>

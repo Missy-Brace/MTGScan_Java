@@ -8,14 +8,33 @@
     android:layout_margin="4dp"
     android:gravity="center">
 
-    <ImageView
-        android:id="@+id/imgCard"
+    <!-- IMAGE + CROSS OVERLAY -->
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="150dp"
-        android:scaleType="centerCrop"
-        android:background="@android:color/darker_gray"
-        android:contentDescription="Card Image" />
+        android:layout_height="150dp">
 
+        <ImageView
+            android:id="@+id/imgCard"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:background="@android:color/darker_gray"
+            android:contentDescription="Card Image" />
+
+        <ImageButton
+        android:id="@+id/btnRemove"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="6dp"
+        android:background="@drawable/bg_remove_circle"
+        android:src="@drawable/ic_close_white"
+        android:elevation="6dp"/>
+
+
+    </FrameLayout>
+
+    <!-- TEXT -->
     <TextView
         android:id="@+id/txtName"
         android:layout_width="match_parent"

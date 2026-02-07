@@ -26,23 +26,33 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <ImageView
-                android:id="@+id/imgCard"
+            <!-- IMAGE + FLIP -->
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="280dp"
-                android:scaleType="fitCenter"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="16dp">
 
-            <TextView
-                android:id="@+id/txtName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="22sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
-                android:layout_marginBottom="8dp" />
+                <ImageView
+                    android:id="@+id/imgCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="fitCenter" />
 
+                <!-- Flip bottom-right on card -->
+                <ImageButton
+                    android:id="@+id/btnFlip"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_gravity="bottom|end"
+                    android:layout_margin="10dp"
+                    android:background="@android:color/transparent"
+                    android:src="@android:drawable/ic_menu_rotate"
+                    app:tint="@color/orange" />
+            </FrameLayout>
+
+            <!-- BASIC -->
             <LinearLayout
+                android:id="@+id/layoutBasic"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
@@ -58,14 +68,50 @@
                     android:layout_height="wrap_content"/>
 
                 <TextView
-                    android:id="@+id/txtType"
+                    android:id="@+id/txtBasic"
                     android:textColor="@android:color/white"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+
+            <!-- TYPE & MANA -->
+            <LinearLayout
+                android:id="@+id/layoutTypeMana"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_card_dark"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:text="Type &amp; Mana"
+                    android:textColor="@color/orange"
+                    android:textStyle="bold"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"/>
 
                 <TextView
-                    android:id="@+id/txtMana"
+                    android:id="@+id/txtTypeMana"
                     android:textColor="@android:color/white"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+
+            <!-- STATS -->
+            <LinearLayout
+                android:id="@+id/layoutStats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:background="@drawable/bg_card_dark"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:text="Stats"
+                    android:textColor="@color/orange"
+                    android:textStyle="bold"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"/>
 
@@ -76,7 +122,9 @@
                     android:layout_height="wrap_content"/>
             </LinearLayout>
 
+            <!-- RULES -->
             <LinearLayout
+                android:id="@+id/layoutRules"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
@@ -85,44 +133,164 @@
                 android:layout_marginBottom="16dp">
 
                 <TextView
-                    android:text="Card Text"
+                    android:text="Rules"
                     android:textColor="@color/orange"
                     android:textStyle="bold"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"/>
 
                 <TextView
-                    android:id="@+id/txtText"
+                    android:id="@+id/txtRules"
                     android:textColor="@android:color/white"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"/>
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/txtPrice"
-                android:textColor="@android:color/white"
-                android:textSize="16sp"
-                android:layout_marginBottom="16dp"
+            <!-- FLAVOR -->
+            <LinearLayout
+                android:id="@+id/layoutFlavor"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:background="@drawable/bg_card_dark"
+                android:layout_marginBottom="16dp">
 
-            <ImageButton
-                android:id="@+id/btnFlip"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@android:drawable/ic_menu_rotate"
-                android:background="@android:color/transparent"
-                app:tint="@color/orange"
-                android:layout_gravity="center" />
+                <TextView
+                    android:text="Flavor"
+                    android:textColor="@color/orange"
+                    android:textStyle="bold"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
 
+                <TextView
+                    android:id="@+id/txtFlavor"
+                    android:textColor="@android:color/white"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+            <!-- LEGALITIES -->
+
+            <LinearLayout
+                android:id="@+id/layoutLegalities"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:background="@drawable/bg_card_dark"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:id="@+id/tvLegalitiesTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Legalities"
+                    android:textColor="@color/orange"
+                    android:textSize="18sp"
+                    android:textStyle="bold"/>
+
+                <!-- LEGAL -->
+                <TextView
+                    android:id="@+id/tvLegal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Legal"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold"
+                    android:layout_marginTop="12dp"/>
+
+                <com.google.android.flexbox.FlexboxLayout
+                    android:id="@+id/layoutLegal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:flexDirection="row"
+                    app:flexWrap="wrap"/>
+
+
+                <!-- NOT LEGAL -->
+                <TextView
+                    android:id="@+id/tvNotLegal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Not legal"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold"
+                    android:layout_marginTop="16dp"/>
+
+                <com.google.android.flexbox.FlexboxLayout
+                    android:id="@+id/layoutNotLegal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:flexDirection="row"
+                    app:flexWrap="wrap"/>
+
+
+            </LinearLayout>
+
+
+
+            <!-- PRICE -->
+            <LinearLayout
+                android:id="@+id/layoutPrice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:background="@drawable/bg_card_dark"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:text="Price"
+                    android:textColor="@color/orange"
+                    android:textStyle="bold"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/txtUsd"
+                        style="@style/PriceBox"
+                        android:text="USD\n$0.00"/>
+
+                    <TextView
+                        android:id="@+id/txtFoil"
+                        style="@style/PriceBox"
+                        android:text="Foil\n$0.00"/>
+
+                    <TextView
+                        android:id="@+id/txtEur"
+                        style="@style/PriceBox"
+                        android:text="EUR\n€0.00"/>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/txtPriceAsOf"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="As of: —"
+                    android:textColor="#AAAAAA"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+
+
+
+
+            <!-- PROGRESS -->
             <ProgressBar
                 android:id="@+id/progress"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:visibility="gone" />
+                android:visibility="gone"/>
 
         </LinearLayout>
     </ScrollView>
-
 </LinearLayout>

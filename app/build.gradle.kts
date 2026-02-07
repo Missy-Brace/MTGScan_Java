@@ -48,6 +48,7 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.3")
     implementation ("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor ("com.github.bumptech.glide:compiler:4.16.0")
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
 
     implementation(libs.appcompat)
     implementation(libs.material)

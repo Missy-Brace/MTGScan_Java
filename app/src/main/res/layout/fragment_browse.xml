@@ -6,52 +6,69 @@
     android:orientation="vertical"
     android:background="@android:color/black">
 
-    <!-- Header -->
-    <LinearLayout
+    <!-- HEADER -->
+
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:padding="16dp">
 
         <ImageView
             android:id="@+id/btnBack"
             android:layout_width="24dp"
             android:layout_height="24dp"
+            android:layout_alignParentStart="true"
             android:src="@drawable/ic_back"
             app:tint="@color/white" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
             android:text="Browse"
             android:textColor="@android:color/white"
             android:textSize="18sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginStart="16dp" />
+            android:textStyle="bold" />
+    </RelativeLayout>
+
+
+    <!-- SEARCH + FILTER ROW -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <EditText
+            android:id="@+id/searchInput"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_input"
+            android:hint="Search cards…"
+            android:paddingHorizontal="12dp"
+            android:textColor="@android:color/white"
+            android:textColorHint="#888" />
+
+        <ImageView
+            android:id="@+id/btnFilter"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/bg_circle"
+            android:padding="12dp"
+            android:src="@drawable/ic_filter"
+            app:tint="@color/white" />
     </LinearLayout>
 
-    <!-- Search box -->
-    <EditText
-        android:id="@+id/searchInput"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_margin="16dp"
-        android:hint="Search cards…"
-        android:paddingHorizontal="12dp"
-        android:textColor="@android:color/white"
-        android:textColorHint="#888"
-        android:background="@drawable/bg_input" />
-
-    <!-- Card grid -->
+    <!-- CARD GRID -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:clipToPadding="false"
         android:scrollbars="vertical"/>
-
-
 
 </LinearLayout>

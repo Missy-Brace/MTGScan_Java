@@ -17,8 +17,8 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="@android:color/transparent"
-            android:src="@android:drawable/ic_media_previous"
-            android:tint="#00A3FF"/>
+            android:src="@drawable/ic_back"
+            android:tint="#FF6A00"/>
 
         <EditText
             android:id="@+id/edtSearch"

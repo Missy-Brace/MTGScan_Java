@@ -18,8 +18,8 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="@android:color/transparent"
-            android:src="@android:drawable/ic_media_previous"
-            android:tint="#00A3FF"/>
+            android:src="@drawable/ic_back"
+            android:tint="#FF6A00"/>
 
         <TextView
             android:id="@+id/txtTitle"
@@ -37,7 +37,7 @@
             android:layout_height="40dp"
             android:background="@android:color/transparent"
             android:src="@android:drawable/ic_input_add"
-            android:tint="#00A3FF"/>
+            android:tint="#FF6A00"/>
 
         <ImageButton
             android:id="@+id/btnMore"

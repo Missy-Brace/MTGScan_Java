@@ -60,6 +60,7 @@ public class CollectionFragment extends Fragment {
             public void onItemClick(Group group) {
                 Intent i = new Intent(requireContext(), CollectionDetailActivity.class);
                 i.putExtra("group_id", group.getId());
+                i.putExtra("group_name", group.getName());
                 startActivity(i);
             }
 

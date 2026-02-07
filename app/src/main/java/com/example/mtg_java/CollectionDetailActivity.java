@@ -1,7 +1,12 @@
 package com.example.mtg_java;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.InputType;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,11 +29,16 @@ import retrofit2.Response;
 public class CollectionDetailActivity extends AppCompatActivity {
 
     String groupId;
+    String groupName;
     SessionManager session;
 
     RecyclerView recyclerView;
     CardAdapter adapter;
     List<Card> cardList = new ArrayList<>();
+
+    // ✅ ADDED
+    TextView txtTitle;
+    GroupApiManager api;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,9 +48,17 @@ public class CollectionDetailActivity extends AppCompatActivity {
         groupId = getIntent().getStringExtra("group_id");
         session = new SessionManager(this);
 
+        // ✅ ADDED
+        api = new GroupApiManager();
+        groupName = getIntent().getStringExtra("group_name");
+
+        txtTitle = findViewById(R.id.txtTitle);
+        txtTitle.setText(groupName);
+
+
         recyclerView = findViewById(R.id.recyclerCards);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
-        adapter = new CardAdapter(this, cardList);
+        adapter = new CardAdapter(this, cardList, groupId);
         recyclerView.setAdapter(adapter);
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
@@ -50,13 +68,17 @@ public class CollectionDetailActivity extends AppCompatActivity {
                     .putExtra("group_id", groupId));
         });
 
+        findViewById(R.id.btnMore).setOnClickListener(v -> {
+            showCollectionOptions();
+        });
+
         loadGroupCards();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        loadGroupCards();   // 🔥 THIS is what refreshes after back
+        loadGroupCards();
     }
 
     private void loadGroupCards() {
@@ -79,5 +101,74 @@ public class CollectionDetailActivity extends AppCompatActivity {
                                 "Failed to load collection", Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    private void showCollectionOptions() {
+        String[] options = {"Rename", "Delete"};
+
+        new AlertDialog.Builder(this)
+                .setTitle("Collection Options")
+                .setItems(options, (d, which) -> {
+                    if (which == 0) showRenameDialog();
+                    else showDeleteDialog();
+                })
+                .show();
+    }
+
+    private void showRenameDialog() {
+        EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setText(txtTitle.getText().toString()); // now works
+
+        new AlertDialog.Builder(this)
+                .setTitle("Rename Collection")
+                .setView(input)
+                .setPositiveButton("Save", (d, w) -> {
+                    String name = input.getText().toString().trim();
+                    if (!name.isEmpty()) {
+                        renameCollection(name);
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void renameCollection(String newName) {
+        api.renameGroup(session, groupId, newName, new GroupApiManager.SimpleCallback() {
+            @Override
+            public void onDone() {
+                txtTitle.setText(newName);
+            }
+
+            @Override
+            public void onError(String msg) {
+                Toast.makeText(CollectionDetailActivity.this, msg, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void showDeleteDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete this collection?")
+                .setMessage("This cannot be undone.")
+                .setPositiveButton("Delete", (d, w) -> {
+                    deleteCollection();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteCollection() {
+        api.deleteGroup(session, groupId, new GroupApiManager.SimpleCallback() {
+            @Override
+            public void onDone() {
+                finish();
+            }
+
+            @Override
+            public void onError(String msg) {
+                Toast.makeText(CollectionDetailActivity.this, msg, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

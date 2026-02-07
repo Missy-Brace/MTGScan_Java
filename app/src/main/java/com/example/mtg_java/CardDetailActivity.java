@@ -1,14 +1,17 @@
 package com.example.mtg_java;
 
 import android.app.AlertDialog;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,7 +25,9 @@ import com.example.mtg_java.model.Card;
 import com.example.mtg_java.model.CardFace;
 import com.example.mtg_java.model.Group;
 import com.example.mtg_java.utils.SessionManager;
+import com.google.android.flexbox.FlexboxLayout;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import java.util.List;
 
@@ -33,15 +38,35 @@ import retrofit2.Response;
 public class CardDetailActivity extends AppCompatActivity {
 
     private ImageView imgCard;
-    private TextView txtName, txtType, txtMana, txtText, txtStats, txtPrice;
     private ProgressBar progress;
+
+    private TextView txtBasic;
+    private TextView txtTypeMana;
+    private TextView txtRulings;
+    private TextView txtPrints;
+
+    private TextView txtUsd;
+    private TextView txtFoil;
+    private TextView txtEur;
+    private TextView txtPriceAsOf;
+    private View layoutPrice;
+
+    private View layoutRulings;
+    private View layoutPrints;
+
+    private TextView txtStats;
+    private TextView txtRules;
+    private TextView txtFlavor;
+
     private ImageButton btnFlip;
     private MaterialToolbar toolbar;
+    private View layoutStats;
+    private View layoutRules;
+    private View layoutFlavor;
 
     private Card card;
     private int faceIndex = 0;
 
-    // REAL COLLECTION SYSTEM
     private SessionManager session;
     private GroupApiManager groupApi;
 
@@ -50,14 +75,11 @@ public class CardDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_card_detail);
 
-        // ================= TOOLBAR =================
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
         toolbar.setNavigationIcon(R.drawable.ic_back);
         toolbar.setNavigationOnClickListener(v -> finish());
 
-        // ================= SESSION / API =================
         session = new SessionManager(this);
         groupApi = new GroupApiManager();
 
@@ -66,18 +88,26 @@ public class CardDetailActivity extends AppCompatActivity {
             return;
         }
 
-        // ================= VIEWS =================
         imgCard = findViewById(R.id.imgCard);
-        txtName = findViewById(R.id.txtName);
-        txtType = findViewById(R.id.txtType);
-        txtMana = findViewById(R.id.txtMana);
-        txtText = findViewById(R.id.txtText);
-        txtStats = findViewById(R.id.txtStats);
-        txtPrice = findViewById(R.id.txtPrice);
         progress = findViewById(R.id.progress);
+
+        txtBasic = findViewById(R.id.txtBasic);
+        txtTypeMana = findViewById(R.id.txtTypeMana);
+        txtStats = findViewById(R.id.txtStats);
+        txtRules = findViewById(R.id.txtRules);
+        txtFlavor = findViewById(R.id.txtFlavor);
+        layoutStats = findViewById(R.id.layoutStats);
+        layoutRules = findViewById(R.id.layoutRules);
+        layoutFlavor = findViewById(R.id.layoutFlavor);
+
+        txtUsd = findViewById(R.id.txtUsd);
+        txtFoil = findViewById(R.id.txtFoil);
+        txtEur = findViewById(R.id.txtEur);
+        txtPriceAsOf = findViewById(R.id.txtPriceAsOf);
+        layoutPrice = findViewById(R.id.layoutPrice);
+
         btnFlip = findViewById(R.id.btnFlip);
 
-        // ================= INTENT =================
         String cardId = getIntent().getStringExtra("CARD_ID");
         if (cardId == null) {
             finish();
@@ -88,7 +118,6 @@ public class CardDetailActivity extends AppCompatActivity {
         btnFlip.setOnClickListener(v -> flipCard());
     }
 
-    // ================= MENU =================
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_card_detail, menu);
@@ -104,7 +133,6 @@ public class CardDetailActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    // ================= CARD API =================
     private void loadCard(String id) {
         progress.setVisibility(View.VISIBLE);
 
@@ -129,25 +157,53 @@ public class CardDetailActivity extends AppCompatActivity {
     private void showCard() {
         toolbar.setTitle(card.getName());
 
-        txtName.setText(card.getName());
-        txtType.setText(card.getType());
-        txtMana.setText(card.getManaCost());
-        txtText.setText(card.getText());
-
-        if (card.getPower() != null && card.getToughness() != null) {
-            txtStats.setText(card.getPower() + " / " + card.getToughness());
-        } else {
-            txtStats.setText("-");
-        }
-
-        if (card.getCurrentPrice() != null && card.getCurrentPrice().getUsd() != null) {
-            txtPrice.setText("$" + card.getCurrentPrice().getUsd());
-        } else {
-            txtPrice.setText("-");
-        }
-
         if (card.getImageUrl() != null) {
             Glide.with(this).load(card.getImageUrl()).into(imgCard);
+        }
+
+        txtBasic.setText(
+                "Rarity - " + safe(card.getRarity()) + "\n" +
+                        "Set - " + safe(card.getSetId()) + "\n" +
+                        "Set Name - " + safe(card.getSetName()) + "\n" +
+                        "Language - " + safe(card.getLanguage()) + "\n" +
+                        "Released At - " + safe(card.getReleasedAt())
+        );
+
+        txtTypeMana.setText(
+                "Type - " + safe(card.getType()) + "\n" +
+                        "Subtype - " + safe(card.getSubtype()) + "\n" +
+                        "Mana Cost - " + safe(card.getManaCost()) + "\n" +
+                        "Artist - " + safe(card.getArtist()) + "\n" +
+                        "Colors - " + list(card.getColors()) + "\n" +
+                        "Color Identity - " + list(card.getColorIdentity()) + "\n" +
+                        "Keywords - " + list(card.getKeywords())
+        );
+
+        if (card.getPower() != null && card.getToughness() != null) {
+            txtStats.setText("Power - " + card.getPower() + "\nToughness - " + card.getToughness());
+            layoutStats.setVisibility(View.VISIBLE);
+        } else if (card.getLoyalty() != null) {
+            txtStats.setText("Loyalty - " + card.getLoyalty());
+            layoutStats.setVisibility(View.VISIBLE);
+        } else if (card.getDefense() != null) {
+            txtStats.setText("Defense - " + card.getDefense());
+            layoutStats.setVisibility(View.VISIBLE);
+        } else {
+            layoutStats.setVisibility(View.GONE);
+        }
+
+        if (card.getText() == null || card.getText().isEmpty()) {
+            layoutRules.setVisibility(View.GONE);
+        } else {
+            txtRules.setText(card.getText());
+            layoutRules.setVisibility(View.VISIBLE);
+        }
+
+        if (card.getFlavorText() == null || card.getFlavorText().isEmpty()) {
+            layoutFlavor.setVisibility(View.GONE);
+        } else {
+            txtFlavor.setText(card.getFlavorText());
+            layoutFlavor.setVisibility(View.VISIBLE);
         }
 
         btnFlip.setVisibility(
@@ -155,22 +211,23 @@ public class CardDetailActivity extends AppCompatActivity {
                         ? View.VISIBLE
                         : View.GONE
         );
+
+        bindLegalities(card);
+        bindPrice(card);
     }
 
-    // ================= FLIP =================
     private void flipCard() {
         if (card.getFaces() == null || card.getFaces().size() != 2) return;
 
         faceIndex = faceIndex == 0 ? 1 : 0;
         CardFace face = card.getFaces().get(faceIndex);
 
-        txtName.setText(face.getName());
-        txtType.setText(face.getType());
-        txtMana.setText(face.getManaCost());
-        txtText.setText(face.getText());
+        toolbar.setTitle(face.getName());
+        txtTypeMana.setText("Type - " + safe(face.getType()) + "\nMana Cost - " + safe(face.getManaCost()));
+        txtRules.setText(safe(face.getText()));
 
         if (face.getPower() != null && face.getToughness() != null) {
-            txtStats.setText(face.getPower() + " / " + face.getToughness());
+            txtStats.setText("Power - " + face.getPower() + "\nToughness - " + face.getToughness());
         } else {
             txtStats.setText("-");
         }
@@ -180,74 +237,70 @@ public class CardDetailActivity extends AppCompatActivity {
         }
     }
 
-    // ================= COLLECTION (REAL) =================
-    private void showAddToCollectionDialog() {
-        AlertDialog loading = new AlertDialog.Builder(this)
-                .setTitle("Add to Collection")
-                .setMessage("Loading...")
-                .setCancelable(false)
-                .create();
+    private String safe(String s) {
+        return s == null || s.isEmpty() ? "-" : s;
+    }
 
-        loading.show();
+    private String safeNum(Double d) {
+        return d == null ? "—" : String.format("%.2f", d);
+    }
+
+    private String list(List<String> list) {
+        if (list == null || list.isEmpty()) return "-";
+        return String.join(", ", list);
+    }
+
+    private void showAddToCollectionDialog() {
+        BottomSheetDialog sheet = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.bottomsheet_add_collection, null);
+        sheet.setContentView(view);
+
+        LinearLayout list = view.findViewById(R.id.listCollections);
+        EditText edtNew = view.findViewById(R.id.edtNewCollection);
+
+        view.findViewById(R.id.btnCreateAdd).setOnClickListener(v -> {
+            String name = edtNew.getText().toString().trim();
+            if (!name.isEmpty()) {
+                createGroupAndAddCard(name);
+                sheet.dismiss();
+            }
+        });
 
         groupApi.getGroups(session, new GroupApiManager.ListCallback() {
             @Override
             public void onSuccess(List<Group> groups) {
-                loading.dismiss();
+                for (Group g : groups) {
+                    TextView item = new TextView(CardDetailActivity.this);
+                    item.setText(g.getName());
+                    item.setTextSize(16);
+                    item.setPadding(8, 16, 8, 16);
+                    item.setTextColor(Color.WHITE);
 
-                if (groups.isEmpty()) {
-                    showCreateCollectionDialog();
-                    return;
+                    item.setOnClickListener(v -> {
+                        addCardToGroup(g);
+                        sheet.dismiss();
+                    });
+
+                    list.addView(item);
                 }
-
-                String[] items = new String[groups.size() + 1];
-                for (int i = 0; i < groups.size(); i++) {
-                    items[i] = groups.get(i).getName();
-                }
-                items[groups.size()] = "➕ Create new collection";
-
-                new AlertDialog.Builder(CardDetailActivity.this)
-                        .setTitle("Select Collection")
-                        .setItems(items, (d, which) -> {
-                            if (which == groups.size()) {
-                                showCreateCollectionDialog();
-                            } else {
-                                addCardToGroup(groups.get(which));
-                            }
-                        })
-                        .show();
             }
 
             @Override
             public void onError(String msg) {
-                loading.dismiss();
                 Toast.makeText(CardDetailActivity.this, msg, Toast.LENGTH_SHORT).show();
             }
         });
+
+        sheet.show();
     }
 
-    private void showCreateCollectionDialog() {
-        EditText input = new EditText(this);
-        input.setInputType(InputType.TYPE_CLASS_TEXT);
-
-        new AlertDialog.Builder(this)
-                .setTitle("New Collection")
-                .setView(input)
-                .setPositiveButton("Create", (d, w) -> {
-                    String name = input.getText().toString().trim();
-                    if (!name.isEmpty()) {
-                        createGroupAndAddCard(name);
-                    }
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
-
+    // ************ FIXED PART ************
     private void createGroupAndAddCard(String name) {
         groupApi.createGroup(session, name, new GroupApiManager.ObjectCallback() {
             @Override
             public void onSuccess(Group g) {
-                Toast.makeText(CardDetailActivity.this, "Collection created", Toast.LENGTH_SHORT).show();
+                // NOW ALSO ADD CARD
+                addCardToGroup(g);
             }
 
             @Override
@@ -256,6 +309,7 @@ public class CardDetailActivity extends AppCompatActivity {
             }
         });
     }
+    // ************************************
 
     private void addCardToGroup(Group group) {
         groupApi.addCard(
@@ -280,5 +334,56 @@ public class CardDetailActivity extends AppCompatActivity {
         );
     }
 
+    private void bindLegalities(Card card) {
+        FlexboxLayout layoutLegal = findViewById(R.id.layoutLegal);
+        FlexboxLayout layoutNotLegal = findViewById(R.id.layoutNotLegal);
 
+        layoutLegal.removeAllViews();
+        layoutNotLegal.removeAllViews();
+
+        List<String> legalFormats = card.getLegalFormats();
+        if (legalFormats != null) {
+            for (String format : legalFormats) {
+                layoutLegal.addView(createChip(format));
+            }
+        }
+
+        List<String> notLegalFormats = card.getNotLegalFormats();
+        if (notLegalFormats != null) {
+            for (String format : notLegalFormats) {
+                layoutNotLegal.addView(createChip(format));
+            }
+        }
+    }
+
+    private void bindPrice(Card card) {
+        if (card.getCurrentPrice() == null) {
+            layoutPrice.setVisibility(View.GONE);
+            return;
+        }
+
+        Card.CurrentPrice p = card.getCurrentPrice();
+
+        txtUsd.setText("USD\n$" + safeNum(p.getUsd()));
+        txtFoil.setText("Foil\n$" + safeNum(p.getUsdFoil()));
+        txtEur.setText("EUR\n€" + safeNum(p.getEur()));
+        txtPriceAsOf.setText("As of: " + (p.getAsOf() != null ? p.getAsOf() : "—"));
+    }
+
+    private TextView createChip(String text) {
+        TextView chip = new TextView(this);
+        chip.setText(text);
+        chip.setTextColor(Color.WHITE);
+        chip.setBackgroundResource(R.drawable.bg_chips);
+
+        FlexboxLayout.LayoutParams params =
+                new FlexboxLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                );
+        params.setMargins(5, 5, 5, 5);
+        chip.setLayoutParams(params);
+
+        return chip;
+    }
 }

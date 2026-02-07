@@ -20,12 +20,18 @@ import retrofit2.http.Header;
 
 public interface ApiService {
 
+
     @GET("/api/cards")
     Call<CardResponse> getCards(
             @Query("search") String search,
             @Query("page") int page,
-            @Query("limit") int limit
+            @Query("limit") int limit,
+            @Query("name") String name,
+            @Query("text") String text,
+            @Query("type") String type,
+            @Query("artist") String artist
     );
+
 
     @GET("/api/cards/{id}")
     Call<Card> getCardDetail(@Path("id") String id);

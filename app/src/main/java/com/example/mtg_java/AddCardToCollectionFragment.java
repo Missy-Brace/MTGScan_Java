@@ -1,9 +1,14 @@
 package com.example.mtg_java;
 
 import android.os.Bundle;
+import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.os.Handler;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -36,6 +41,11 @@ public class AddCardToCollectionFragment extends Fragment {
 
     String groupId;
     SessionManager session;
+    EditText searchInput;
+    Handler searchHandler = new Handler(Looper.getMainLooper());
+    Runnable searchRunnable;
+    String currentQuery = "";
+
 
     @Nullable
     @Override
@@ -45,11 +55,29 @@ public class AddCardToCollectionFragment extends Fragment {
             @Nullable Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_add_card, container, false);
+        searchInput = requireActivity().findViewById(R.id.edtSearch);
+
 
         recyclerView = view.findViewById(R.id.recyclerCards);
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
 
         adapter = new CardAdapter(getContext(), cardList, card -> addCard(card));
+        searchInput.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void afterTextChanged(Editable s) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                currentQuery = s.toString().trim();
+
+                if (searchRunnable != null)
+                    searchHandler.removeCallbacks(searchRunnable);
+
+                searchRunnable = () -> loadCards();
+                searchHandler.postDelayed(searchRunnable, 400);
+            }
+        });
+
         recyclerView.setAdapter(adapter);
 
         session = new SessionManager(requireContext());
@@ -66,28 +94,30 @@ public class AddCardToCollectionFragment extends Fragment {
     private void loadCards() {
         ApiService api = ApiClient.getClient().create(ApiService.class);
 
-        api.getCards("", 1, 30).enqueue(new Callback<CardResponse>() {
-            @Override
-            public void onResponse(Call<CardResponse> call, Response<CardResponse> res) {
-                if (res.isSuccessful() && res.body() != null && res.body().items != null) {
-                    cardList.clear();
-                    for (CardResponse.CardItem c : res.body().items) {
-                        Card card = new Card();
-                        card.setUniversalId(c.id);
-                        card.setName(c.name);
-                        card.setImageUrl(c.imageUrl);
-                        cardList.add(card);
+        api.getCards(currentQuery, 1, 30,null, null, null, null)
+                .enqueue(new Callback<CardResponse>() {
+                    @Override
+                    public void onResponse(Call<CardResponse> call, Response<CardResponse> res) {
+                        if (res.isSuccessful() && res.body() != null && res.body().items != null) {
+                            cardList.clear();
+                            for (CardResponse.CardItem c : res.body().items) {
+                                Card card = new Card();
+                                card.setUniversalId(c.id);
+                                card.setName(c.name);
+                                card.setImageUrl(c.imageUrl);
+                                cardList.add(card);
+                            }
+                            adapter.notifyDataSetChanged();
+                        }
                     }
-                    adapter.notifyDataSetChanged();
-                }
-            }
 
-            @Override
-            public void onFailure(Call<CardResponse> call, Throwable t) {
-                Toast.makeText(getContext(), "Failed to load cards", Toast.LENGTH_SHORT).show();
-            }
-        });
+                    @Override
+                    public void onFailure(Call<CardResponse> call, Throwable t) {
+                        Toast.makeText(getContext(), "Failed to load cards", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
+
 
     private void addCard(Card card) {
         ApiService api = ApiClient.getClient().create(ApiService.class);

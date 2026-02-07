@@ -1,0 +1,40 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_card_dark">
+
+    <TextView
+        android:text="Add to collection"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="12dp"/>
+
+    <LinearLayout
+        android:id="@+id/listCollections"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <EditText
+        android:id="@+id/edtNewCollection"
+        android:hint="New collection name..."
+        android:textColor="@android:color/white"
+        android:textColorHint="#777"
+        android:background="@drawable/bg_input_dark"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"/>
+
+    <Button
+        android:id="@+id/btnCreateAdd"
+        android:text="Create &amp; Add"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"
+        android:backgroundTint="@color/orange"/>
+</LinearLayout>
