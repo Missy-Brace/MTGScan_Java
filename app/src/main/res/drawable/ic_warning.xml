@@ -1,0 +1,33 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960"
+    android:tint="#FAF7F7">
+
+    <!-- Circle Outline -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="80"
+        android:pathData="
+            M480,120
+            A360,360 0 1,1 479.9,120
+        "/>
+
+    <!-- Exclamation Mark -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="
+            M440,560
+            L440,240
+            L520,240
+            L520,560
+            Z
+
+            M440,720
+            L440,640
+            L520,640
+            L520,720
+            Z"/>
+</vector>

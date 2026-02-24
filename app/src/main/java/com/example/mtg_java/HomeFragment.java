@@ -1,64 +1,127 @@
 package com.example.mtg_java;
 
+import android.content.Intent;
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link HomeFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.mtg_java.GroupApiManager;
+import com.example.mtg_java.NewsListActivity;
+import com.example.mtg_java.R;
+import com.example.mtg_java.adapter.NewsAdapter;
+import com.example.mtg_java.api.NewsApiManager;
+import com.example.mtg_java.model.Group;
+import com.example.mtg_java.model.NewsResponse;
+import com.example.mtg_java.utils.SessionManager;
+
+import java.util.List;
+
 public class HomeFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private RecyclerView newsRecycler;
+    private TextView tvCollections;
+    private TextView tvCards;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    public HomeFragment() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment HomeFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static HomeFragment newInstance(String param1, String param2) {
-        HomeFragment fragment = new HomeFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
+    @Nullable
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_home, container, false);
+        View view = inflater.inflate(R.layout.fragment_home, container, false);
+        TextView seeAll = view.findViewById(R.id.tvSeeAll);
+
+        seeAll.setOnClickListener(v -> {
+            startActivity(new Intent(getContext(), NewsListActivity.class));
+        });
+        ImageView btnSearch = view.findViewById(R.id.btnSearch);
+
+        btnSearch.setOnClickListener(v -> {
+
+            requireActivity()
+                    .getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.frame_layout, new BrowseFragment())
+                    .addToBackStack(null)
+                    .commit();
+
+        });
+
+        newsRecycler = view.findViewById(R.id.newsRecycler);
+        tvCollections = view.findViewById(R.id.tvCollections);
+        tvCards = view.findViewById(R.id.tvCards);
+        SessionManager sessionManager = new SessionManager(getContext());
+
+        TextView tvUsername = view.findViewById(R.id.tvUsername);
+        TextView tvEmail = view.findViewById(R.id.tvEmail);
+
+        tvUsername.setText("Hi, " + sessionManager.getUsername() + " 👋");
+        tvEmail.setText(sessionManager.getEmail());
+
+        newsRecycler.setLayoutManager(
+                new LinearLayoutManager(
+                        getContext(),
+                        LinearLayoutManager.HORIZONTAL,
+                        false
+                )
+        );
+
+        loadNews();
+        loadStats();
+
+        return view;
+    }
+    private void loadNews() {
+
+        NewsApiManager api = new NewsApiManager();
+
+        api.fetchNews(10, 0, new NewsApiManager.NewsCallback() {
+            @Override
+            public void onSuccess(NewsResponse response) {
+
+                NewsAdapter adapter =
+                        new NewsAdapter(response.getItems(), R.layout.item_news_home);
+
+                newsRecycler.setAdapter(adapter);
+            }
+
+            @Override
+            public void onError(String msg) {
+            }
+        });
+    }
+    private void loadStats() {
+
+        GroupApiManager api = new GroupApiManager();
+        SessionManager session = new SessionManager(getContext());
+
+        api.getGroups(session, new GroupApiManager.ListCallback() {
+            @Override
+            public void onSuccess(List<Group> result) {
+
+                int collectionCount = result.size();
+
+                int totalCards = 0;
+                for (Group g : result) {
+                    totalCards += g.getCardCount(); // uses your model
+                }
+
+                tvCollections.setText(String.valueOf(collectionCount));
+                tvCards.setText(String.valueOf(totalCards));
+            }
+
+            @Override
+            public void onError(String msg) {
+            }
+        });
     }
 }

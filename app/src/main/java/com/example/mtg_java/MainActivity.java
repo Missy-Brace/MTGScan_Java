@@ -25,13 +25,13 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
 
         setContentView(binding.getRoot());
-        replaceFragment(new HomeFragment());
+        replaceFragment(new com.example.mtg_java.HomeFragment());
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
 
             int id = item.getItemId();
 
             if (id == R.id.home) {
-                replaceFragment(new HomeFragment());
+                replaceFragment(new com.example.mtg_java.HomeFragment());
             } else if (id == R.id.scan) {
                 replaceFragment(new ScanFragment());
             } else if (id == R.id.collection) {

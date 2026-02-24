@@ -1,115 +1,253 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:background="#000"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@android:color/black">
+    android:layout_height="match_parent">
 
-    <LinearLayout
-        android:orientation="vertical"
+    <!-- Header -->
+    <RelativeLayout
         android:padding="16dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- Name -->
-        <EditText
-            android:id="@+id/fName"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:hint="Name"
-            android:textColor="@android:color/white"
-            android:textColorHint="#888"/>
-
-        <!-- Text -->
-        <EditText
-            android:id="@+id/fText"
-            android:layout_width="match_parent"
-            android:layout_height="90dp"
-            android:hint="Text"
-            android:textColor="@android:color/white"
-            android:textColorHint="#888"/>
-
-        <!-- Type -->
-        <EditText
-            android:id="@+id/fType"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:hint="Type"
-            android:textColor="@android:color/white"
-            android:textColorHint="#888"/>
-
-        <!-- Colors -->
         <TextView
+            android:id="@+id/btnClose"
+            android:text="✕"
+            android:textColor="#FF6A00"
+            android:textSize="22sp"
+            android:layout_alignParentStart="true"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Colors"
-            android:textColor="@android:color/white"/>
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:text="Advanced Search"
+            android:textColor="@android:color/white"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_centerInParent="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <LinearLayout
+            android:orientation="vertical"
+            android:padding="16dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_height="wrap_content">
 
-            <ToggleButton android:id="@+id/cW" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="W" android:textOff="W"/>
-            <ToggleButton android:id="@+id/cU" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="U" android:textOff="U"/>
-            <ToggleButton android:id="@+id/cB" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="B" android:textOff="B"/>
-            <ToggleButton android:id="@+id/cR" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="R" android:textOff="R"/>
-            <ToggleButton android:id="@+id/cG" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="G" android:textOff="G"/>
+            <!-- Card Text & Set -->
+            <TextView style="@style/SectionTitle"
+                android:text="Card Text &amp; Set"
+                android:layout_marginBottom="12dp"/>
+
+            <TextView style="@style/Label"
+                android:text="Name"
+                android:layout_marginBottom="5dp"/>
+
+            <EditText
+                android:id="@+id/fName"
+                style="@style/Input"
+                android:hint="Card Name"
+                android:layout_marginBottom="15dp"/>
+
+            <TextView style="@style/Label"
+                android:text="Text"
+                android:layout_marginBottom="5dp"/>
+
+            <EditText
+                android:id="@+id/fText"
+                style="@style/InputMultiline"
+                android:hint="Text in the text box"
+                android:layout_marginBottom="25dp"/>
+
+            <View style="@style/Divider"
+                android:layout_marginBottom="20dp"/>
+
+            <!-- Types -->
+            <TextView style="@style/SectionTitle"
+                android:text="Types"
+                android:layout_marginBottom="12dp"/>
+
+            <TextView style="@style/Label"
+                android:text="Type"
+                android:layout_marginBottom="5dp"/>
+
+            <EditText
+                android:id="@+id/fType"
+                style="@style/Input"
+                android:hint="e.g. Creature, Instant..."
+                android:layout_marginBottom="20dp"/>
+
+            <View style="@style/Divider"
+                android:layout_marginBottom="20dp"/>
+
+            <!-- Color & Mana -->
+            <TextView style="@style/SectionTitle"
+                android:text="Color &amp; Mana"
+                android:layout_marginBottom="12dp"/>
+
+            <TextView style="@style/Label"
+                android:text="Color"
+                android:layout_marginBottom="9dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp">
+
+                <ToggleButton android:id="@+id/cW" style="@style/ChipCircle" android:textOn="W" android:textOff="W"/>
+                <ToggleButton android:id="@+id/cU" style="@style/ChipCircle" android:textOn="U" android:textOff="U"/>
+                <ToggleButton android:id="@+id/cB" style="@style/ChipCircle" android:textOn="B" android:textOff="B"/>
+                <ToggleButton android:id="@+id/cR" style="@style/ChipCircle" android:textOn="R" android:textOff="R"/>
+                <ToggleButton android:id="@+id/cG" style="@style/ChipCircle" android:textOn="G" android:textOff="G"/>
+            </LinearLayout>
+
+
+
+            <!-- Color Identity -->
+            <TextView style="@style/Label"
+                android:text="Color Identity"
+                android:layout_marginBottom="9dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp">
+
+                <ToggleButton android:id="@+id/idW" style="@style/ChipCircle" android:textOn="W" android:textOff="W"/>
+                <ToggleButton android:id="@+id/idU" style="@style/ChipCircle" android:textOn="U" android:textOff="U"/>
+                <ToggleButton android:id="@+id/idB" style="@style/ChipCircle" android:textOn="B" android:textOff="B"/>
+                <ToggleButton android:id="@+id/idR" style="@style/ChipCircle" android:textOn="R" android:textOff="R"/>
+                <ToggleButton android:id="@+id/idG" style="@style/ChipCircle" android:textOn="G" android:textOff="G"/>
+            </LinearLayout>
+
+            <TextView style="@style/Label"
+                android:text="Mana Cost (CMC)"
+                android:layout_marginBottom="5dp"/>
+
+            <EditText
+                android:id="@+id/fMana"
+                style="@style/Input"
+                android:hint="Exact converted mana value"
+                android:layout_marginBottom="25dp"/>
+            <View style="@style/Divider"
+                />
+
+            <!-- Rarity & Artist -->
+            <TextView style="@style/SectionTitle"
+                android:text="Rarity &amp; Artist"
+                android:layout_marginBottom="12dp"/>
+
+
+
+            <TextView style="@style/Label"
+                android:text="Rarity"
+                android:layout_marginBottom="5dp"
+                />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:orientation="horizontal">
+
+                <ToggleButton
+                    android:id="@+id/rCommon"
+                    style="@style/Chip"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+
+                    android:layout_marginHorizontal="2dp"
+                    android:textOn="Common"
+                    android:textOff="Common"/>
+
+                <ToggleButton
+                    android:id="@+id/rUncommon"
+                    style="@style/Chip"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginHorizontal="2dp"
+                    android:textOn="Uncommon"
+                    android:textOff="Uncommon"/>
+
+                <ToggleButton
+                    android:id="@+id/rRare"
+                    style="@style/Chip"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginHorizontal="2dp"
+                    android:textOn="Rare"
+                    android:textOff="Rare"/>
+
+                <ToggleButton
+                    android:id="@+id/rMythic"
+                    style="@style/Chip"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginHorizontal="2dp"
+                    android:textOn="Mythic"
+                    android:textOff="Mythic"/>
+            </LinearLayout>
+
+
+            <TextView style="@style/Label"
+                android:text="Artist"
+                android:layout_marginBottom="5dp"/>
+
+            <EditText
+                android:id="@+id/fArtist"
+                style="@style/Input"
+                android:hint="Artist name"
+                android:layout_marginBottom="20dp"/>
+
         </LinearLayout>
+    </ScrollView>
 
-        <!-- Color Identity -->
+    <!-- Bottom bar -->
+    <LinearLayout
+        android:padding="12dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="72dp">
+
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Color Identity"
-            android:textColor="@android:color/white"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <ToggleButton android:id="@+id/idW" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="W" android:textOff="W"/>
-            <ToggleButton android:id="@+id/idU" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="U" android:textOff="U"/>
-            <ToggleButton android:id="@+id/idB" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="B" android:textOff="B"/>
-            <ToggleButton android:id="@+id/idR" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="R" android:textOff="R"/>
-            <ToggleButton android:id="@+id/idG" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="G" android:textOff="G"/>
-        </LinearLayout>
-
-        <!-- Mana -->
-        <EditText
-            android:id="@+id/fMana"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:hint="Mana Cost (CMC)"
-            android:inputType="number"
-            android:textColor="@android:color/white"
-            android:textColorHint="#888"/>
-
-        <!-- Rarity -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Rarity"
-            android:textColor="@android:color/white"/>
-
-        <ToggleButton android:id="@+id/rCommon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="Common" android:textOff="Common"/>
-        <ToggleButton android:id="@+id/rUncommon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="Uncommon" android:textOff="Uncommon"/>
-        <ToggleButton android:id="@+id/rRare" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="Rare" android:textOff="Rare"/>
-        <ToggleButton android:id="@+id/rMythic" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOn="Mythic" android:textOff="Mythic"/>
-
-        <!-- Artist -->
-        <EditText
-            android:id="@+id/fArtist"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:hint="Artist"
-            android:textColor="@android:color/white"
-            android:textColorHint="#888"/>
+            android:id="@+id/tvSummary"
+            android:text="No filters selected"
+            android:textColor="#AAA"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"/>
 
         <Button
-            android:id="@+id/btnApply"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Search"/>
+            android:id="@+id/btnClear"
+            android:text="Clear All"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:paddingHorizontal="20dp"
+            android:textSize="14sp"
+            android:backgroundTint="#444"
+            android:textColor="@android:color/white"/>
+        <Button
+            android:id="@+id/btnSearch"
+            android:text="Search"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:paddingHorizontal="20dp"
+            android:textSize="14sp"
+            android:backgroundTint="#FF6A00"
+            android:textColor="@android:color/white"
+            android:layout_marginStart="12dp"/>
+
+
+
+
     </LinearLayout>
-</ScrollView>
+
+</LinearLayout>

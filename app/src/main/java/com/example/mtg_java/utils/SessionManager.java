@@ -11,6 +11,8 @@ public class SessionManager {
 
     // ✅ ADDED (do not break old code)
     private static final String KEY_TOKEN = "jwt_token";
+    private static final String KEY_USERNAME = "username";
+    private static final String KEY_EMAIL = "email";
 
     private SharedPreferences prefs;
     private SharedPreferences.Editor editor;
@@ -48,6 +50,23 @@ public class SessionManager {
     // ✅ ADDED
     public String getToken() {
         return prefs.getString(KEY_TOKEN, null);
+    }
+    public void saveUser(String username, String email) {
+        editor.putString(KEY_USERNAME, username);
+        editor.putString(KEY_EMAIL, email);
+        editor.apply();
+    }
+    public void clearSession() {
+        editor.clear();
+        editor.apply();
+    }
+
+    public String getUsername() {
+        return prefs.getString(KEY_USERNAME, "");
+    }
+
+    public String getEmail() {
+        return prefs.getString(KEY_EMAIL, "");
     }
 
     // 🔹 EXISTING (unchanged)

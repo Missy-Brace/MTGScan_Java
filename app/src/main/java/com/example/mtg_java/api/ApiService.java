@@ -31,6 +31,23 @@ public interface ApiService {
             @Query("type") String type,
             @Query("artist") String artist
     );
+    @GET("/api/cards")
+    Call<CardResponse> searchCards(
+            @Query("search") String search,
+            @Query("page") int page,
+            @Query("limit") int limit,
+
+            @Query("name") String name,
+            @Query("text") String text,
+            @Query("type") String type,
+            @Query("artist") String artist,
+
+            @Query("rarity") String rarity,
+            @Query("manaCost") Integer manaCost,
+
+            @Query("colors") List<String> colors,
+            @Query("colorIdentity") List<String> colorIdentity
+    );
 
 
     @GET("/api/cards/{id}")

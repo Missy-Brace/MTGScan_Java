@@ -7,6 +7,7 @@ public class CardResponse {
     @SerializedName("items")
     public List<CardItem> items;
 
+
     public static class CardItem {
         @SerializedName("universal_id")
         public String id;

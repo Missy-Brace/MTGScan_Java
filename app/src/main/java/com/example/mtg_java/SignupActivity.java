@@ -55,8 +55,9 @@ public class SignupActivity extends AppCompatActivity {
 
             // ✅ FIXED
             @Override
-            public void onSuccess(String token, String userId) {
+            public void onSuccess(String token, String userId, String username, String email, String finalProfileImage) {
                 progressBar.setVisibility(View.GONE);
+
                 Toast.makeText(SignupActivity.this,
                         "Signup successful",
                         Toast.LENGTH_SHORT).show();

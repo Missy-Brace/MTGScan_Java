@@ -65,13 +65,17 @@ public class LoginActivity extends AppCompatActivity {
 
             // ✅ FIXED: correct method signature
             @Override
-            public void onSuccess(String token, String userId) {
+            public void onSuccess(String token, String userId, String username, String email, String finalProfileImage){
                 progressBar.setVisibility(View.GONE);
 
                 // Session already saved in AuthManager,
                 // but keeping this is safe
                 SessionManager sessionManager = new SessionManager(LoginActivity.this);
+
                 sessionManager.setLoggedIn(true);
+                sessionManager.saveUserId(userId);
+                sessionManager.saveToken(token);
+                sessionManager.saveUser(username, email);
 
                 startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 finish();
