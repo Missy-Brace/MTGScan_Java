@@ -25,11 +25,15 @@ import com.example.mtg_java.utils.SessionManager;
 
 import java.util.List;
 
+import com.bumptech.glide.Glide;
+
 public class HomeFragment extends Fragment {
 
     private RecyclerView newsRecycler;
     private TextView tvCollections;
     private TextView tvCards;
+    private ImageView imgAvatar;
+    private AuthManager authManager;
 
     @Nullable
     @Override
@@ -78,6 +82,32 @@ public class HomeFragment extends Fragment {
         loadNews();
         loadStats();
 
+        imgAvatar = view.findViewById(R.id.imgAvatar);
+
+        authManager = new AuthManager(requireContext());
+        authManager.getCurrentUser(new AuthManager.AuthCallback() {
+            @Override
+            public void onSuccess(String t, String id, String username, String email, String profileImage) {
+                if (!isAdded()) return;
+
+                requireActivity().runOnUiThread(() -> {
+                    if (profileImage != null && !profileImage.isEmpty()) {
+                        Glide.with(requireContext())
+                                .load(profileImage)
+                                .circleCrop()
+                                .into(imgAvatar);
+                    } else {
+                        imgAvatar.setImageResource(android.R.drawable.sym_def_app_icon);
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String message) {
+                // optional: log or toast
+            }
+        });
+        loadAvatar();
         return view;
     }
     private void loadNews() {
@@ -124,4 +154,38 @@ public class HomeFragment extends Fragment {
             }
         });
     }
+
+    private void loadAvatar() {
+        if (authManager == null || imgAvatar == null) return;
+
+        authManager.getCurrentUser(new AuthManager.AuthCallback() {
+            @Override
+            public void onSuccess(String t, String id, String username, String email, String profileImage) {
+                if (!isAdded()) return;
+
+                requireActivity().runOnUiThread(() -> {
+                    if (profileImage != null && !profileImage.isEmpty()) {
+                        Glide.with(requireContext())
+                                .load(profileImage)
+                                .circleCrop()
+                                .into(imgAvatar);
+                    } else {
+                        imgAvatar.setImageResource(android.R.drawable.sym_def_app_icon);
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String message) {
+                // log if you want
+            }
+        });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadAvatar();
+    }
+
 }
