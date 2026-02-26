@@ -244,7 +244,7 @@ public class ScanFragment extends Fragment {
                             DebugSaver.saveToFolder(ctx, resized, "crops_debug", "model_input");
                         }
 
-                        if (r.prob < 0.75f) return;
+                        if (r.prob < 0.65f) return;
 
                         if (isAdded()) {
                             requireActivity().runOnUiThread(() -> navigateToResult(r.label));
