@@ -3,36 +3,36 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="@android:color/black"
-    android:paddingTop="16dp">
+    android:orientation="vertical"
+    android:paddingTop="0dp">
 
     <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="16dp"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:paddingHorizontal="16dp">
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Scan"
+            android:textColor="@android:color/white"
             android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/white" />
+            android:textStyle="bold" />
 
         <ImageView
             android:id="@+id/btnSearch"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:src="@drawable/ic_search"
-            android:padding="12dp"
-            android:contentDescription="Search"
             android:clickable="true"
+            android:contentDescription="Search"
             android:focusable="true"
+            android:padding="12dp"
+            android:src="@drawable/ic_search"
             app:tint="@android:color/white" />
     </LinearLayout>
 
@@ -53,23 +53,36 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
+        <com.example.mtg_java.scanner.LiveDebugOverlay
+            android:id="@+id/liveOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
         <View
             android:id="@+id/cardOverlay"
-            android:layout_width="320dp"
-            android:layout_height="280dp"
+            android:layout_width="340dp"
+            android:layout_height="240dp"
             android:layout_gravity="top|center_horizontal"
-            android:layout_marginTop="120dp"
+            android:layout_marginTop="40dp"
             android:background="@drawable/overlay_frame" />
 
-        <com.example.mtg_java.scanner.RectOverlayView
-            android:id="@+id/rectOverlay"
-            android:layout_width="match_parent"
-            android:layout_height="500dp"
-            android:layout_marginTop="60dp" />
+        <View
+            android:id="@+id/cardNameOverlay"
+            android:layout_width="355dp"
+            android:layout_height="30dp"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/overlay_frame" />
+
+        <View
+            android:id="@+id/cardTypeOverlay"
+            android:layout_width="355dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center|center_horizontal"
+            android:layout_marginTop="45dp"
+            android:background="@drawable/overlay_frame" />
 
     </FrameLayout>
-
-
 
 
     <!-- Helper text -->

@@ -28,14 +28,13 @@ import androidx.fragment.app.Fragment;
 
 import com.example.mtg_java.scanner.DebugSaver;
 import com.example.mtg_java.scanner.ImageProxyUtils;
+import com.example.mtg_java.scanner.LiveDebugOverlay;
 import com.example.mtg_java.scanner.RectangleDetector;
 import com.example.mtg_java.scanner.TFLiteImageClassifier;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import org.opencv.android.OpenCVLoader;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -45,15 +44,14 @@ public class ScanFragment extends Fragment {
 
     private ExecutorService cameraExecutor;
     private TFLiteImageClassifier classifier;
-
     private PreviewView previewView;
+    private LiveDebugOverlay liveOverlay;
 
     private boolean navigated = false;
 
-    private static final long TICK_MS = 10L;
-    private static final long WARMUP_MS = 30L;
+    private static final long TICK_MS = 50L;
+    private static final long WARMUP_MS = 150L;
 
-    // shifted up already
     private static final int GATE_TOP = 135;
     private static final int GATE_BOTTOM = 1124;
 
@@ -65,12 +63,23 @@ public class ScanFragment extends Fragment {
     private static final int MODEL_W = 564;
     private static final int MODEL_H = 411;
 
+    // Keep as a secondary safety check (less strict than detector stage)
+    private static final float CARD_ASPECT = 5f / 7f;
+    private static final float ASPECT_WIGGLE = 0.30f; // a bit looser than before
+
     private long lastDebugSaveMs = 0L;
     private static final long DEBUG_SAVE_MIN_INTERVAL_MS = 50L;
 
-    // Ratio filter
-    private static final float CARD_ASPECT = 5f / 7f;   // ~0.714
-    private static final float ASPECT_WIGGLE = 0.25f;   // 25%
+    // Fast stability (EMA)
+    private Rect stableRect = null;
+    private long stableRectTs = 0L;
+    private static final long STABLE_TTL_MS = 300L;
+    private static final float STABLE_ALPHA = 0.35f;
+    private static final float STABLE_IOU_MIN = 0.30f;
+
+    // Simple model cooldown so we don't spam inference when we already have a good rect
+    private long lastInferenceMs = 0L;
+    private static final long INFERENCE_MIN_INTERVAL_MS = 80L;
 
     public ScanFragment() {
         super(R.layout.fragment_scan);
@@ -81,6 +90,7 @@ public class ScanFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         previewView = view.findViewById(R.id.previewView);
+        liveOverlay = view.findViewById(R.id.liveOverlay);
 
         view.findViewById(R.id.btnSearch).setOnClickListener(v -> {
             requireActivity()
@@ -91,17 +101,13 @@ public class ScanFragment extends Fragment {
                     .commit();
         });
 
-        // Init OpenCV first
-        boolean ok = OpenCVLoader.initLocal();
-        if (!ok) {
+        if (!OpenCVLoader.initLocal()) {
             Toast.makeText(requireContext(), "OpenCV init failed", Toast.LENGTH_LONG).show();
             return;
         }
 
-        // Init executor
         cameraExecutor = Executors.newSingleThreadExecutor();
 
-        // Get app-scoped classifier (do NOT close in Fragment)
         MyApp app = (MyApp) requireActivity().getApplication();
         classifier = app.getClassifierBlocking();
         if (classifier == null) {
@@ -109,10 +115,8 @@ public class ScanFragment extends Fragment {
             return;
         }
 
-        // Permission then camera
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED) {
-            // IMPORTANT: wait for PreviewView to be laid out (width/height must be > 0 for ViewPort)
             previewView.post(this::startCamera);
         } else {
             ActivityCompat.requestPermissions(
@@ -124,12 +128,12 @@ public class ScanFragment extends Fragment {
     }
 
     private void startCamera() {
-        ListenableFuture<ProcessCameraProvider> cameraProviderFuture =
+        ListenableFuture<ProcessCameraProvider> future =
                 ProcessCameraProvider.getInstance(requireContext());
 
-        cameraProviderFuture.addListener(() -> {
+        future.addListener(() -> {
             try {
-                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+                ProcessCameraProvider provider = future.get();
 
                 int rotation = getPreviewRotationSafe();
 
@@ -140,112 +144,120 @@ public class ScanFragment extends Fragment {
                 ImageAnalysis analysis = new ImageAnalysis.Builder()
                         .setTargetRotation(rotation)
                         .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
-                        // Keep your preferred analysis size; viewport will ensure same crop as preview
                         .setTargetResolution(new Size(720, 1280))
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build();
 
                 final long[] startTime = {0L};
                 final long[] lastTick = {0L};
-                final Deque<String> last3 = new ArrayDeque<>(3);
 
-                analysis.setAnalyzer(cameraExecutor, (ImageProxy imageProxy) -> {
+                analysis.setAnalyzer(cameraExecutor, imageProxy -> {
                     try {
                         long now = System.currentTimeMillis();
                         if (startTime[0] == 0L) startTime[0] = now;
 
-                        // 1) Throttle analysis frequency
                         if (now - lastTick[0] < TICK_MS) return;
                         lastTick[0] = now;
 
-                        // 2) Get initial image, no alterations
+                        if (navigated) return;
+
                         Bitmap frame = ImageProxyUtils.toRgbaBitmapUpright(imageProxy);
                         int frameW = frame.getWidth();
                         int frameH = frame.getHeight();
 
-                        // 3) Check if it contains a rectangle (with all the logic in RectangleDetector)
-                        // If you kept the old API:
-                        Rect rect = RectangleDetector.findBestRectangle(frame);
-                        if (rect == null) return;
-
-                        // If you prefer quad API:
-                        // RectangleDetector.Quad quad = RectangleDetector.findBestQuadStable(frame);
-                        // if (quad == null) return;
-                        // Rect rect = quad.boundingRect;
-
-                        // Apply the same extra filters you do in ScanFragment (ratio/area/gate)
-                        if (!isCardAspect(rect)) return;
-                        if (!isBigEnough(rect, frameW, frameH)) return;
-
                         int gateTop = Math.max(0, GATE_TOP);
                         int gateBottom = Math.min(frameH, GATE_BOTTOM);
-                        if (rect.top < gateTop || rect.bottom > gateBottom) return;
+                        Rect cropRect = new Rect(CROP_L, CROP_T, CROP_R, CROP_B);
 
-                        // 4) Crop the image (YOU requested: crop using fixed CROP_* constants)
-                        // NOTE: this is independent of rect crop, but still only triggers if rect exists & passes filters.
-                        Bitmap rawCrop = cropClamped(frame, CROP_L, CROP_T, CROP_R, CROP_B);
+                        // Detect inside ROI band (fast)
+                        RectangleDetector.Quad quad = RectangleDetector.findBestQuad(frame, gateTop, gateBottom);
 
-                        // 5) Resize the crop to be the same as model's input
-                        Bitmap resizedForModel = Bitmap.createScaledBitmap(rawCrop, MODEL_W, MODEL_H, true);
+                        Rect rawRect = (quad != null) ? quad.boundingRect : null;
+                        Rect drawRect = rawRect;
+
+                        // If we have a rect, stabilize it (also improves overlay)
+                        if (rawRect != null) {
+                            drawRect = stabilizeRect(rawRect, now);
+                        }
+
+                        // ALWAYS draw every tick (even if not accepted)
+                        Rect finalDrawRect = drawRect;
+                        requireActivity().runOnUiThread(() -> {
+                            if (liveOverlay != null) {
+                                liveOverlay.update(finalDrawRect, frameW, frameH, gateTop, gateBottom, cropRect);
+                            }
+                        });
+
+                        if (quad == null || drawRect == null) return;
 
                         // Warmup gate (avoid immediate trigger while camera settles)
                         if (now - startTime[0] < WARMUP_MS) return;
 
-                        // 6) Feed it to model (IMPORTANT: use resizedForModel — same image you save!)
-                        TFLiteImageClassifier.Result r = classifier.classifyTop1(resizedForModel);
-                        String label = r.label; // expected to be card_id UUID
+                        // --- Acceptance thresholds (Step 3) ---
+                        // Use areaNorm + aspectScore; score is helpful but device-dependent.
+                        // These defaults are fast but not reckless.
+                        if (quad.areaNorm < 0.18) return;      // too small in ROI band
+                        if (quad.aspectScore < 0.55f) return;  // plausible card-ish aspect
+                        if (quad.score < 2.8) return;          // combined score floor
 
-                        // 7) Save debug artifacts (full frame + exact model input crop)
+                        Rect rect = drawRect;
+
+                        // Extra guards (cheap)
+                        if (!isCardAspect(rect)) return;
+                        if (!isBigEnough(rect, frameW, frameH)) return;
+                        if (rect.top < gateTop || rect.bottom > gateBottom) return;
+
+                        // Avoid spamming inference
+                        if (now - lastInferenceMs < INFERENCE_MIN_INTERVAL_MS) return;
+                        lastInferenceMs = now;
+
+                        // Crop fixed window (your chosen model crop)
+                        Bitmap rawCrop = cropClamped(frame, CROP_L, CROP_T, CROP_R, CROP_B);
+                        Bitmap resized = Bitmap.createScaledBitmap(rawCrop, MODEL_W, MODEL_H, true);
+
+                        TFLiteImageClassifier.Result r = classifier.classifyTop1(resized);
+
+                        // Save debug artifacts
                         if (now - lastDebugSaveMs >= DEBUG_SAVE_MIN_INTERVAL_MS) {
                             lastDebugSaveMs = now;
 
-                            // full frame with overlay lines
-                            Rect cropRect = new Rect(CROP_L, CROP_T, CROP_R, CROP_B);
                             Bitmap debugBmp = com.example.mtg_java.scanner.DebugDraw.drawDebug(
                                     frame, rect, gateTop, gateBottom, cropRect
                             );
                             DebugSaver.saveToFolder(requireContext(), debugBmp, "debug", "debug");
-
-                            // exact model input (what the model actually saw)
-                            DebugSaver.saveToFolder(requireContext(), resizedForModel, "crops_debug", "model_input");
+                            DebugSaver.saveToFolder(requireContext(), resized, "crops_debug", "model_input");
                         }
 
-                        // 8) Track 3 successful hits with same top prediction
-                        if (last3.size() == 3) last3.removeFirst();
-                        last3.addLast(label);
+                        // Model confidence threshold (0.85 is very strict; start here)
+                        if (r.prob < 0.75f) return;
 
-                        if (last3.size() == 3 && allSame(last3)) {
-                            requireActivity().runOnUiThread(() -> navigateToResult(label)); // opens CardDetailActivity by CARD_ID
-                        }
+                        requireActivity().runOnUiThread(() -> navigateToResult(r.label));
 
                     } finally {
                         imageProxy.close();
                     }
                 });
 
-                // ✅ FORCE same crop/FOV between Preview and ImageAnalysis
-                // (This fixes "debug camera is smaller than UI camera")
                 int vw = previewView.getWidth();
                 int vh = previewView.getHeight();
                 if (vw <= 0 || vh <= 0) {
-                    // Should not happen due to previewView.post, but guard anyway
                     vw = 1;
                     vh = 1;
                 }
 
                 ViewPort viewPort = new ViewPort.Builder(new Rational(vw, vh), rotation).build();
 
-                UseCaseGroup useCaseGroup = new UseCaseGroup.Builder()
+                UseCaseGroup group = new UseCaseGroup.Builder()
                         .setViewPort(viewPort)
                         .addUseCase(preview)
                         .addUseCase(analysis)
                         .build();
 
-                cameraProvider.unbindAll();
-                cameraProvider.bindToLifecycle(
+                provider.unbindAll();
+                provider.bindToLifecycle(
                         this,
                         CameraSelector.DEFAULT_BACK_CAMERA,
-                        useCaseGroup
+                        group
                 );
 
                 preview.setSurfaceProvider(previewView.getSurfaceProvider());
@@ -263,39 +275,27 @@ public class ScanFragment extends Fragment {
         return Surface.ROTATION_0;
     }
 
-    private void navigateToResult(String cardId) {
+    private void navigateToResult(String id) {
         if (navigated) return;
         navigated = true;
 
         Intent i = new Intent(requireContext(), CardDetailActivity.class);
-        i.putExtra("CARD_ID", cardId);
+        i.putExtra("CARD_ID", id);
         startActivity(i);
     }
 
-    private static boolean allSame(Deque<String> last3) {
-        if (last3.size() < 3) return false;
-        String first = last3.peekFirst();
-        for (String s : last3) {
-            if (!first.equals(s)) return false;
-        }
-        return true;
-    }
-
     private static boolean isCardAspect(Rect r) {
-        if (r == null) return false;
-
         float w = r.width();
         float h = r.height();
         if (w <= 0 || h <= 0) return false;
 
-        float aspect = w / h;
+        float aspect = w / h; // width/height in upright bitmap coords
         float min = CARD_ASPECT * (1f - ASPECT_WIGGLE);
         float max = CARD_ASPECT * (1f + ASPECT_WIGGLE);
-        return (aspect >= min && aspect <= max);
+        return aspect >= min && aspect <= max;
     }
 
     private static boolean isBigEnough(Rect r, int frameW, int frameH) {
-        if (r == null) return false;
         float area = (float) r.width() * r.height();
         float frameArea = (float) frameW * frameH;
         return area >= 0.15f * frameArea;
@@ -309,30 +309,66 @@ public class ScanFragment extends Fragment {
         return Bitmap.createBitmap(src, l, t, r - l, b - t);
     }
 
-    @Override
-    public void onRequestPermissionsResult(
-            int requestCode,
-            @NonNull String[] permissions,
-            @NonNull int[] grantResults
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (requestCode == CAMERA_REQUEST_CODE
-                && grantResults.length > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            // IMPORTANT: wait for layout before startCamera
-            if (previewView != null) previewView.post(this::startCamera);
+    // -------- Stability helpers --------
+    private Rect stabilizeRect(Rect r, long now) {
+        if (stableRect == null || (now - stableRectTs) > STABLE_TTL_MS) {
+            stableRect = new Rect(r);
+            stableRectTs = now;
+            return stableRect;
         }
+
+        float iou = iou(stableRect, r);
+        if (iou < STABLE_IOU_MIN) {
+            stableRect = new Rect(r);
+            stableRectTs = now;
+            return stableRect;
+        }
+
+        stableRect = lerpRect(stableRect, r, STABLE_ALPHA);
+        stableRectTs = now;
+        return stableRect;
+    }
+
+    private static Rect lerpRect(Rect a, Rect b, float alpha) {
+        int l = (int) (a.left + alpha * (b.left - a.left));
+        int t = (int) (a.top + alpha * (b.top - a.top));
+        int r = (int) (a.right + alpha * (b.right - a.right));
+        int bb = (int) (a.bottom + alpha * (b.bottom - a.bottom));
+        return new Rect(l, t, r, bb);
+    }
+
+    private static float iou(Rect a, Rect b) {
+        int x1 = Math.max(a.left, b.left);
+        int y1 = Math.max(a.top, b.top);
+        int x2 = Math.min(a.right, b.right);
+        int y2 = Math.min(a.bottom, b.bottom);
+
+        int iw = Math.max(0, x2 - x1);
+        int ih = Math.max(0, y2 - y1);
+        int inter = iw * ih;
+        if (inter <= 0) return 0f;
+
+        int areaA = Math.max(1, a.width() * a.height());
+        int areaB = Math.max(1, b.width() * b.height());
+        int union = areaA + areaB - inter;
+
+        return inter / (float) union;
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
-        // Do NOT close classifier here if it's owned by MyApp and shared across screens
-        // if (classifier != null) classifier.close();
-
         if (cameraExecutor != null) cameraExecutor.shutdown();
         navigated = false;
+        stableRect = null;
+        stableRectTs = 0L;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        navigated = false;
+        stableRect = null;
+        stableRectTs = 0L;
     }
 }
