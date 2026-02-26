@@ -61,6 +61,11 @@
             android:layout_marginTop="120dp"
             android:background="@drawable/overlay_frame" />
 
+        <com.example.mtg_java.scanner.RectOverlayView
+            android:id="@+id/rectOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="500dp"
+            android:layout_marginTop="60dp" />
 
     </FrameLayout>
 

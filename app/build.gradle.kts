@@ -39,7 +39,7 @@ dependencies {
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
     implementation(libs.recyclerview)
-    val cameraxVersion = "1.3.1"
+    val cameraxVersion = "1.5.3"
 
     implementation("androidx.camera:camera-core:$cameraxVersion")
     implementation("androidx.camera:camera-camera2:$cameraxVersion")
@@ -54,6 +54,9 @@ dependencies {
     implementation ("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor ("com.github.bumptech.glide:compiler:4.16.0")
     implementation("com.google.android.flexbox:flexbox:3.0.0")
+
+    implementation("org.opencv:opencv:4.9.0")
+    implementation("com.google.ai.edge.litert:litert:2.1.1")
 
     implementation(libs.appcompat)
     implementation(libs.material)
