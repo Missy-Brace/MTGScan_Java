@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -27,6 +28,12 @@ public class LoginActivity extends AppCompatActivity {
 
         // ✅ check session FIRST
         SessionManager sessionManager = new SessionManager(this);
+
+        if (sessionManager.isSessionValid()) {
+            startActivity(new Intent(LoginActivity.this, MainActivity.class));
+            finish();
+            return;
+        }
         //if (sessionManager.isLoggedIn()) {
           //  startActivity(new Intent(LoginActivity.this, MainActivity.class));
             //finish();
@@ -54,8 +61,29 @@ public class LoginActivity extends AppCompatActivity {
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
-        if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
-            Toast.makeText(this, "Email and password required", Toast.LENGTH_SHORT).show();
+        // 🔹 Email validation
+        if (TextUtils.isEmpty(email)) {
+            etEmail.setError("Email is required");
+            etEmail.requestFocus();
+            return;
+        }
+
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            etEmail.setError("Enter valid email");
+            etEmail.requestFocus();
+            return;
+        }
+
+        // 🔹 Password validation
+        if (TextUtils.isEmpty(password)) {
+            etPassword.setError("Password is required");
+            etPassword.requestFocus();
+            return;
+        }
+
+        if (password.length() < 6) {
+            etPassword.setError("Password must be at least 6 characters");
+            etPassword.requestFocus();
             return;
         }
 
@@ -63,15 +91,12 @@ public class LoginActivity extends AppCompatActivity {
 
         authManager.login(email, password, new AuthManager.AuthCallback() {
 
-            // ✅ FIXED: correct method signature
             @Override
-            public void onSuccess(String token, String userId, String username, String email, String finalProfileImage){
+            public void onSuccess(String token, String userId, String username, String email, String finalProfileImage) {
                 progressBar.setVisibility(View.GONE);
+                Log.d("MY_TOKEN", token);
 
-                // Session already saved in AuthManager,
-                // but keeping this is safe
                 SessionManager sessionManager = new SessionManager(LoginActivity.this);
-
                 sessionManager.setLoggedIn(true);
                 sessionManager.saveUserId(userId);
                 sessionManager.saveToken(token);
@@ -88,4 +113,5 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
     }
+
 }

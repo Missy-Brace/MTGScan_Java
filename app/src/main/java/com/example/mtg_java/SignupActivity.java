@@ -36,16 +36,47 @@ public class SignupActivity extends AppCompatActivity {
         btnSignup.setOnClickListener(v -> handleSignup());
         btnGoLogin.setOnClickListener(v -> finish());
     }
-
     private void handleSignup() {
         String username = etUsername.getText().toString().trim();
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
-        if (TextUtils.isEmpty(username) ||
-                TextUtils.isEmpty(email) ||
-                TextUtils.isEmpty(password)) {
-            Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show();
+        // 🔹 Username validation
+        if (TextUtils.isEmpty(username)) {
+            etUsername.setError("Username is required");
+            etUsername.requestFocus();
+            return;
+        }
+
+        if (username.length() < 3) {
+            etUsername.setError("Username must be at least 3 characters");
+            etUsername.requestFocus();
+            return;
+        }
+
+        // 🔹 Email validation
+        if (TextUtils.isEmpty(email)) {
+            etEmail.setError("Email is required");
+            etEmail.requestFocus();
+            return;
+        }
+
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            etEmail.setError("Enter valid email");
+            etEmail.requestFocus();
+            return;
+        }
+
+        // 🔹 Password validation
+        if (TextUtils.isEmpty(password)) {
+            etPassword.setError("Password is required");
+            etPassword.requestFocus();
+            return;
+        }
+
+        if (password.length() < 6) {
+            etPassword.setError("Password must be at least 6 characters");
+            etPassword.requestFocus();
             return;
         }
 
@@ -53,7 +84,6 @@ public class SignupActivity extends AppCompatActivity {
 
         authManager.register(username, email, password, new AuthManager.AuthCallback() {
 
-            // ✅ FIXED
             @Override
             public void onSuccess(String token, String userId, String username, String email, String finalProfileImage) {
                 progressBar.setVisibility(View.GONE);
@@ -69,8 +99,18 @@ public class SignupActivity extends AppCompatActivity {
             @Override
             public void onError(String message) {
                 progressBar.setVisibility(View.GONE);
-                Toast.makeText(SignupActivity.this, message, Toast.LENGTH_SHORT).show();
+
+                // 🔥 Improve duplicate account error
+                if (message.toLowerCase().contains("exists") ||
+                        message.toLowerCase().contains("duplicate")) {
+
+                    etEmail.setError("Account already exists");
+                    etEmail.requestFocus();
+                } else {
+                    Toast.makeText(SignupActivity.this, message, Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
+
 }

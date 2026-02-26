@@ -224,9 +224,22 @@ public class AuthManager {
                             callback.onSuccess("", "", "", "", "")
                     );
                 } else {
-                    mainHandler.post(() ->
-                            callback.onError("Password change failed")
-                    );
+
+                    if (response.code() == 401) {
+
+                        SessionManager session = new SessionManager(context);
+                        session.clearSession();
+
+                        mainHandler.post(() ->
+                                callback.onError("Please log in again.")
+                        );
+
+                    } else {
+
+                        mainHandler.post(() ->
+                                callback.onError("Password change failed.")
+                        );
+                    }
                 }
             }
         });
@@ -286,9 +299,22 @@ public class AuthManager {
                     );
 
                 } else {
-                    mainHandler.post(() ->
-                            callback.onError("Update failed")
-                    );
+
+                    if (response.code() == 401) {
+
+                        SessionManager session = new SessionManager(context);
+                        session.clearSession();
+
+                        mainHandler.post(() ->
+                                callback.onError("Please log in again.")
+                        );
+
+                    } else {
+
+                        mainHandler.post(() ->
+                                callback.onError("Update failed.")
+                        );
+                    }
                 }
             }
         });
@@ -340,9 +366,19 @@ public class AuthManager {
                     );
 
                 } else {
-                    mainHandler.post(() ->
-                            callback.onError("Failed to fetch user")
-                    );
+
+                    if (response.code() == 401) {
+                        SessionManager session = new SessionManager(context);
+                        session.clearSession();
+
+                        mainHandler.post(() ->
+                                callback.onError("Session expired. Please log in again.")
+                        );
+                    } else {
+                        mainHandler.post(() ->
+                                callback.onError("Something went wrong. Please try again.")
+                        );
+                    }
                 }
             }
         });
@@ -408,10 +444,45 @@ public class AuthManager {
                         );
                     }
                 } else {
+                    String errorMessage = "Request failed";
+
+                    try {
+                        Gson gson = new Gson();
+                        JsonObject errorJson = gson.fromJson(responseBody, JsonObject.class);
+
+                        if (errorJson.has("message")) {
+                            errorMessage = errorJson.get("message").getAsString();
+                        }
+                        else if (errorJson.has("error")) {
+                            errorMessage = errorJson.get("error").getAsString();
+                        }
+
+                    } catch (Exception ignored) {}
+
+// Optional: customize login errors
+                    // ===== LOGIN ERRORS =====
+                    if (url.contains("login")) {
+
+                        if (response.code() == 401) {
+                            errorMessage = "Incorrect email or password.";
+                        }
+
+                        else if (response.code() == 404) {
+                            errorMessage = "Account not found.";
+                        }
+
+                        else if (response.code() >= 500) {
+                            errorMessage = "Something went wrong. Please try again.";
+                        }
+                    }
+
+                    String finalErrorMessage = errorMessage;
+
                     mainHandler.post(() ->
-                            callback.onError("Authentication failed")
+                            callback.onError(finalErrorMessage)
                     );
                 }
+
             }
         });
     }

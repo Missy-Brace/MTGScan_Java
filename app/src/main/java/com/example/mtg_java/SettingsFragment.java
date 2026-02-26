@@ -84,6 +84,7 @@ public class SettingsFragment extends Fragment {
 
     // 🔹 Logout
     private void logout() {
+        SessionManager session = new SessionManager(getContext());
         session.clearSession();
 
         Intent intent = new Intent(getActivity(), LoginActivity.class);

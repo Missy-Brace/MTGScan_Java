@@ -46,6 +46,33 @@ public class SessionManager {
         editor.putString(KEY_TOKEN, token);
         editor.apply();
     }
+    public boolean isSessionValid() {
+        String token = getToken();
+        return token != null && !isTokenExpired();
+    }
+    public boolean isTokenExpired() {
+        String token = getToken();
+
+        if (token == null) return true;
+
+        try {
+            String[] parts = token.split("\\.");
+            String payload = parts[1];
+
+            byte[] decodedBytes = android.util.Base64.decode(payload, android.util.Base64.URL_SAFE);
+            String decoded = new String(decodedBytes);
+
+            org.json.JSONObject obj = new org.json.JSONObject(decoded);
+
+            long exp = obj.getLong("exp");
+            long currentTime = System.currentTimeMillis() / 1000;
+
+            return currentTime > exp;
+
+        } catch (Exception e) {
+            return true;
+        }
+    }
 
     // ✅ ADDED
     public String getToken() {
