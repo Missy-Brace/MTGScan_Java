@@ -53,10 +53,10 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-        <com.example.mtg_java.scanner.LiveDebugOverlay
-            android:id="@+id/liveOverlay"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+<!--        <com.example.mtg_java.scanner.LiveDebugOverlay-->
+<!--            android:id="@+id/liveOverlay"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="match_parent" />-->
 
         <View
             android:id="@+id/cardOverlay"

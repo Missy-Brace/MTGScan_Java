@@ -46,7 +46,7 @@ public class ScanFragment extends Fragment {
     private ExecutorService cameraExecutor;
     private TFLiteImageClassifier classifier;
     private PreviewView previewView;
-    private LiveDebugOverlay liveOverlay;
+    //private LiveDebugOverlay liveOverlay;
 
     // Keep references so we can stop camera/analyzer when Fragment detaches
     private ProcessCameraProvider cameraProvider;
@@ -95,7 +95,7 @@ public class ScanFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         previewView = view.findViewById(R.id.previewView);
-        liveOverlay = view.findViewById(R.id.liveOverlay);
+        //liveOverlay = view.findViewById(R.id.liveOverlay);
 
         view.findViewById(R.id.btnSearch).setOnClickListener(v -> {
             if (!isAdded()) return;
@@ -199,13 +199,13 @@ public class ScanFragment extends Fragment {
                         }
 
                         final Rect finalDrawRect = drawRect;
-                        if (isAdded()) {
-                            requireActivity().runOnUiThread(() -> {
-                                if (liveOverlay != null) {
-                                    liveOverlay.update(finalDrawRect, frameW, frameH, gateTop, gateBottom, cropRect);
-                                }
-                            });
-                        }
+//                        if (isAdded()) {
+//                            requireActivity().runOnUiThread(() -> {
+//                                if (liveOverlay != null) {
+//                                    liveOverlay.update(finalDrawRect, frameW, frameH, gateTop, gateBottom, cropRect);
+//                                }
+//                            });
+//                        }
 
                         if (quad == null || drawRect == null) return;
 
@@ -442,6 +442,6 @@ public class ScanFragment extends Fragment {
 
         // avoid leaking views
         previewView = null;
-        liveOverlay = null;
+        //liveOverlay = null;
     }
 }
