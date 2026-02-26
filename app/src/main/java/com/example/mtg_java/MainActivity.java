@@ -1,5 +1,6 @@
 package com.example.mtg_java;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
@@ -14,6 +15,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 
 import com.example.mtg_java.databinding.ActivityMainBinding;
+import com.example.mtg_java.utils.SessionManager;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -23,6 +25,16 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
+        SessionManager sessionManager = new SessionManager(this);
+
+        if (!sessionManager.isSessionValid()) {
+            startActivity(new Intent(MainActivity.this, LoginActivity.class));
+            finish();
+            return;
+        }
+
+        // 🤖 Preload ML model
+        ((MyApp) getApplication()).preloadModelIfNeeded();
 
         setContentView(binding.getRoot());
         replaceFragment(new com.example.mtg_java.HomeFragment());
