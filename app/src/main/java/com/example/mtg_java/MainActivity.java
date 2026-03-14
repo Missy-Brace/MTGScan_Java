@@ -37,7 +37,10 @@ public class MainActivity extends AppCompatActivity {
         ((MyApp) getApplication()).preloadModelIfNeeded();
 
         setContentView(binding.getRoot());
-        replaceFragment(new com.example.mtg_java.HomeFragment());
+
+        if (savedInstanceState == null) {
+            replaceFragment(new HomeFragment());
+        }
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
 
             int id = item.getItemId();

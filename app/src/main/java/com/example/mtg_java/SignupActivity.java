@@ -1,12 +1,17 @@
 package com.example.mtg_java;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.style.ForegroundColorSpan;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,7 +19,8 @@ import androidx.appcompat.app.AppCompatActivity;
 public class SignupActivity extends AppCompatActivity {
 
     private EditText etUsername, etEmail, etPassword;
-    private Button btnSignup, btnGoLogin;
+    private Button btnSignup;
+    private TextView btnGoLogin;
     private ProgressBar progressBar;
 
     private AuthManager authManager;
@@ -29,6 +35,18 @@ public class SignupActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.etPassword);
         btnSignup = findViewById(R.id.btnSignup);
         btnGoLogin = findViewById(R.id.btnGoLogin);
+
+        String text = "Already have an account? Login";
+        SpannableString spannable = new SpannableString(text);
+
+        spannable.setSpan(
+                new ForegroundColorSpan(Color.parseColor("#FF5A00")),
+                text.indexOf("Login"),
+                text.length(),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        );
+
+        btnGoLogin.setText(spannable);
         progressBar = findViewById(R.id.progressBar);
 
         authManager = new AuthManager(this);
