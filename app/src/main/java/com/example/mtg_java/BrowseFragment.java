@@ -56,7 +56,7 @@ public class BrowseFragment extends Fragment {
         view.findViewById(R.id.btnFilter).setOnClickListener(v -> {
             requireActivity().getSupportFragmentManager()
                     .beginTransaction()
-                    .replace(R.id.frame_layout, new FilterFragment())
+                    .replace(R.id.frame_layout, FilterFragment.forSearch())
                     .addToBackStack(null)
                     .commit();
         });

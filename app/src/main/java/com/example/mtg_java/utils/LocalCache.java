@@ -12,19 +12,15 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.List;
 
-// Single access point for all local cache reads and writes.
-// Each "table" is a JSON string stored in its own SharedPreferences key.
-// Writes happen only after a successful network response.
 public class LocalCache {
 
-    private static final String PREF_NAME       = "local_cache";
-    private static final String KEY_NEWS        = "news";
-    private static final String KEY_GROUPS      = "groups";
-    private static final String KEY_PROFILE_IMG = "profile_image_url";
-
-    // Cards per collection are keyed by group ID so each collection
-    // has its own independent cache entry.
-    private static final String KEY_CARDS_PREFIX = "cards_";
+    private static final String PREF_NAME         = "local_cache";
+    private static final String KEY_NEWS           = "news";
+    private static final String KEY_GROUPS         = "groups";
+    private static final String KEY_PROFILE_IMG    = "profile_image_url";
+    private static final String KEY_STAT_COLLECTIONS = "stat_collections";
+    private static final String KEY_STAT_CARDS       = "stat_cards";
+    private static final String KEY_CARDS_PREFIX   = "cards_";
 
     private static LocalCache instance;
     private final SharedPreferences prefs;
@@ -40,13 +36,12 @@ public class LocalCache {
         return instance;
     }
 
-    // ── News ────────────────────────────────────────────────────
+    // ── News ─────────────────────────────────────────────────────
 
     public void saveNews(List<News> items) {
         prefs.edit().putString(KEY_NEWS, gson.toJson(items)).apply();
     }
 
-    // Returns null if nothing is cached yet (new account / cleared data).
     public List<News> getNews() {
         String json = prefs.getString(KEY_NEWS, null);
         if (json == null) return null;
@@ -54,7 +49,7 @@ public class LocalCache {
         return gson.fromJson(json, t);
     }
 
-    // ── Collections (groups) ────────────────────────────────────
+    // ── Collections (groups) ─────────────────────────────────────
 
     public void saveGroups(List<Group> groups) {
         prefs.edit().putString(KEY_GROUPS, gson.toJson(groups)).apply();
@@ -67,7 +62,7 @@ public class LocalCache {
         return gson.fromJson(json, t);
     }
 
-    // ── Cards per collection ────────────────────────────────────
+    // ── Cards per collection ──────────────────────────────────────
 
     public void saveCards(String groupId, List<Card> cards) {
         prefs.edit().putString(KEY_CARDS_PREFIX + groupId, gson.toJson(cards)).apply();
@@ -80,7 +75,7 @@ public class LocalCache {
         return gson.fromJson(json, t);
     }
 
-    // ── Profile ─────────────────────────────────────────────────
+    // ── Profile ───────────────────────────────────────────────────
 
     public void saveProfileImageUrl(String url) {
         prefs.edit().putString(KEY_PROFILE_IMG, url).apply();
@@ -90,9 +85,28 @@ public class LocalCache {
         return prefs.getString(KEY_PROFILE_IMG, null);
     }
 
-    // ── Lifecycle ───────────────────────────────────────────────
+    // ── Home stats ────────────────────────────────────────────────
+    // Stored as plain ints — no JSON needed for two numbers.
+    // -1 means "never cached" so callers can distinguish a real zero
+    // from an absent value.
 
-    // Call on logout so stale data from one account never leaks to another.
+    public void saveStats(int collectionCount, int totalCards) {
+        prefs.edit()
+                .putInt(KEY_STAT_COLLECTIONS, collectionCount)
+                .putInt(KEY_STAT_CARDS, totalCards)
+                .apply();
+    }
+
+    /** Returns {collectionCount, totalCards}, or null if never cached. */
+    public int[] getStats() {
+        int collections = prefs.getInt(KEY_STAT_COLLECTIONS, -1);
+        int cards       = prefs.getInt(KEY_STAT_CARDS,       -1);
+        if (collections == -1 && cards == -1) return null;
+        return new int[]{ Math.max(0, collections), Math.max(0, cards) };
+    }
+
+    // ── Lifecycle ─────────────────────────────────────────────────
+
     public void clear() {
         prefs.edit().clear().apply();
     }

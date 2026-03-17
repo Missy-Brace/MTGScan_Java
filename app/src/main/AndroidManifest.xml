@@ -29,9 +29,9 @@
         <activity
             android:name=".AddCardToCollectionActivity"
             android:exported="false" />
-        <activity
+        <!--<activity
             android:name=".AddCardActivity"
-            android:exported="false" />
+            android:exported="false" />-->
         <activity
             android:name=".CollectionDetailActivity"
             android:exported="false" /> <!-- Launcher activity -->

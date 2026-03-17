@@ -1,4 +1,5 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -9,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:orientation="horizontal"
-        android:padding="12dp"
+        android:paddingHorizontal="12dp"
         android:gravity="center_vertical">
 
         <ImageButton
@@ -18,7 +19,7 @@
             android:layout_height="40dp"
             android:background="@android:color/transparent"
             android:src="@drawable/ic_back"
-            android:tint="#FF6A00"/>
+            app:tint="#FF6A00" />
 
         <EditText
             android:id="@+id/edtSearch"
@@ -30,7 +31,31 @@
             android:textColorHint="#777"
             android:background="@android:color/transparent"/>
 
+        <!-- Filter button — matches the style used in fragment_browse.xml -->
+        <ImageView
+            android:id="@+id/btnFilter"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_circle"
+            android:padding="10dp"
+            android:src="@drawable/ic_filter"
+            app:tint="@android:color/white"/>
+
     </LinearLayout>
+
+    <!-- ACTIVE FILTER SUMMARY — hidden until filters are applied -->
+    <TextView
+        android:id="@+id/tvFilterSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="6dp"
+        android:textColor="#FF6A00"
+        android:textSize="12sp"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:visibility="gone"/>
 
     <!-- FRAGMENT HOLDER -->
     <FrameLayout
