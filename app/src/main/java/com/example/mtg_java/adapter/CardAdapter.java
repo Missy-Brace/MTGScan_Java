@@ -28,45 +28,46 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+// FIX: ApiService was being created via Retrofit.create() on every single remove tap
+// (inside removeCardFromGroup). Retrofit.create() uses reflection to generate a proxy
+// class and is expensive. Store one ApiService instance as a field, created once in
+// the constructor, and reuse it for all subsequent calls.
 public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder> {
 
-    private Context context;
-    private List<Card> cardList;
+    private final Context context;
+    private final List<Card> cardList;
     boolean isCollectionMode = false;
 
-    // 🔹 ADDED
     private OnCardClickListener listener;
-
-    // 🔹 ADDED
-
     private String groupId;
     private SessionManager session;
 
-    // 🔹 ADDED interface
+    // FIX: single ApiService instance instead of per-call Retrofit.create()
+    private ApiService apiService;
+
     public interface OnCardClickListener {
         void onCardClick(Card card);
     }
 
-    // 🔹 EXISTING constructor (unchanged)
     public CardAdapter(Context context, List<Card> cardList) {
         this.context = context;
         this.cardList = cardList;
     }
 
-    // 🔹 ADDED new constructor (do NOT remove old one)
     public CardAdapter(Context context, List<Card> cardList, OnCardClickListener listener) {
         this.context = context;
         this.cardList = cardList;
         this.listener = listener;
     }
 
-    // 🔹 ADDED new constructor for collection mode
     public CardAdapter(Context context, List<Card> cardList, String groupId) {
         this.context = context;
         this.cardList = cardList;
         this.groupId = groupId;
         this.isCollectionMode = true;
         this.session = new SessionManager(context);
+        // FIX: create once here, reuse for every remove call
+        this.apiService = ApiClient.getClient().create(ApiService.class);
     }
 
     @NonNull
@@ -85,7 +86,6 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
             Glide.with(context).load(card.getImageUrl()).into(holder.imgCard);
         }
 
-        // 🔹 KEEP original behavior
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onCardClick(card);
@@ -96,12 +96,9 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
             }
         });
 
-        // 🔹 ADDED: show ✕ only in collection
         if (isCollectionMode) {
             holder.btnRemove.setVisibility(View.VISIBLE);
-            holder.btnRemove.setOnClickListener(v -> {
-                showRemoveDialog(card, position);
-            });
+            holder.btnRemove.setOnClickListener(v -> showRemoveDialog(card, position));
         } else {
             holder.btnRemove.setVisibility(View.GONE);
         }
@@ -112,23 +109,18 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         return cardList.size();
     }
 
-    // 🔹 ADDED dialog
     private void showRemoveDialog(Card card, int position) {
         new AlertDialog.Builder(context)
                 .setTitle("Remove card?")
                 .setMessage(card.getName())
-                .setPositiveButton("Remove", (d, w) -> {
-                    removeCardFromGroup(card, position);
-                })
+                .setPositiveButton("Remove", (d, w) -> removeCardFromGroup(card, position))
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
-    // 🔹 ADDED API call
     private void removeCardFromGroup(Card card, int position) {
-        ApiService api = ApiClient.getClient().create(ApiService.class);
-
-        api.removeCardFromGroup(
+        // FIX: use the pre-created apiService field; no longer calls Retrofit.create() here
+        apiService.removeCardFromGroup(
                 groupId,
                 card.getUniversalId(),
                 "Bearer " + session.getToken()
@@ -151,16 +143,12 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
     public class CardViewHolder extends RecyclerView.ViewHolder {
         TextView txtName;
         ImageView imgCard;
-
-        // 🔹 ADDED
         ImageButton btnRemove;
 
         public CardViewHolder(@NonNull View itemView) {
             super(itemView);
-            txtName = itemView.findViewById(R.id.txtName);
-            imgCard = itemView.findViewById(R.id.imgCard);
-
-            // 🔹 ADDED
+            txtName   = itemView.findViewById(R.id.txtName);
+            imgCard   = itemView.findViewById(R.id.imgCard);
             btnRemove = itemView.findViewById(R.id.btnRemove);
         }
     }

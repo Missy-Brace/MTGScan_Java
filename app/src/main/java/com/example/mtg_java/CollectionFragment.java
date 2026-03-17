@@ -23,6 +23,10 @@ import com.example.mtg_java.utils.SessionManager;
 import java.util.ArrayList;
 import java.util.List;
 
+// FIX: Added a dirty-flag (needsRefresh) so onResume() only triggers a network
+// round-trip when data has actually changed (after a create/rename/delete mutation).
+// The original triggered a full reload every time the screen became visible —
+// including soft pauses like app-switching or screen unlock.
 public class CollectionFragment extends Fragment {
 
     private RecyclerView recycler;
@@ -32,6 +36,9 @@ public class CollectionFragment extends Fragment {
 
     private SessionManager session;
     private GroupApiManager api;
+
+    // FIX: dirty flag — reload only when something was mutated
+    private boolean needsRefresh = true;
 
     @Nullable
     @Override
@@ -43,7 +50,6 @@ public class CollectionFragment extends Fragment {
         session = SessionManager.getInstance(requireContext());
         api = new GroupApiManager();
 
-        // 🔐 Not logged in → go to login
         if (!session.isLoggedIn()) {
             startActivity(new Intent(requireContext(), LoginActivity.class));
             requireActivity().finish();
@@ -52,14 +58,14 @@ public class CollectionFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_collection, container, false);
 
-        recycler = view.findViewById(R.id.recyclerGroups);
-        txtEmpty = view.findViewById(R.id.txtEmpty);
+        recycler  = view.findViewById(R.id.recyclerGroups);
+        txtEmpty  = view.findViewById(R.id.txtEmpty);
 
         adapter = new GroupAdapter(groups, new GroupAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Group group) {
                 Intent i = new Intent(requireContext(), CollectionDetailActivity.class);
-                i.putExtra("group_id", group.getId());
+                i.putExtra("group_id",   group.getId());
                 i.putExtra("group_name", group.getName());
                 startActivity(i);
             }
@@ -75,13 +81,23 @@ public class CollectionFragment extends Fragment {
 
         view.findViewById(R.id.btnAdd).setOnClickListener(v -> showCreateDialog());
 
-        loadGroups();
+        loadGroups(); // initial load on create
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // FIX: only reload when a mutation has been performed, not on every resume
+        if (needsRefresh) {
+            loadGroups();
+        }
     }
 
     // ===================== API =====================
 
     private void loadGroups() {
+        needsRefresh = false; // FIX: clear the flag before the call
         api.getGroups(session, new GroupApiManager.ListCallback() {
             @Override
             public void onSuccess(List<Group> result) {
@@ -94,7 +110,8 @@ public class CollectionFragment extends Fragment {
             @Override
             public void onError(String msg) {
                 if (!isAdded()) return;
-                txtEmpty.setVisibility(View.VISIBLE);
+                needsRefresh = true; // FIX: allow retry on next resume if load failed
+                if (txtEmpty != null) txtEmpty.setVisibility(View.VISIBLE);
                 Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
             }
         });
@@ -105,6 +122,7 @@ public class CollectionFragment extends Fragment {
             @Override
             public void onSuccess(Group g) {
                 if (!isAdded()) return;
+                needsRefresh = true; // FIX: mark dirty so onResume reloads
                 loadGroups();
             }
 
@@ -114,15 +132,14 @@ public class CollectionFragment extends Fragment {
                 Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
             }
         });
-
     }
-
 
     private void renameGroup(Group group, String newName) {
         api.renameGroup(session, group.getId(), newName, new GroupApiManager.SimpleCallback() {
             @Override
             public void onDone() {
                 if (!isAdded()) return;
+                needsRefresh = true;
                 loadGroups();
             }
 
@@ -139,6 +156,7 @@ public class CollectionFragment extends Fragment {
             @Override
             public void onDone() {
                 if (!isAdded()) return;
+                needsRefresh = true;
                 loadGroups();
             }
 
@@ -154,7 +172,9 @@ public class CollectionFragment extends Fragment {
 
     private void updateUI() {
         adapter.setGroups(groups);
-        txtEmpty.setVisibility(groups.isEmpty() ? View.VISIBLE : View.GONE);
+        if (txtEmpty != null) {
+            txtEmpty.setVisibility(groups.isEmpty() ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void showCreateDialog() {
@@ -166,9 +186,7 @@ public class CollectionFragment extends Fragment {
                 .setView(input)
                 .setPositiveButton("Create", (d, w) -> {
                     String name = input.getText().toString().trim();
-                    if (!name.isEmpty()) {
-                        createGroup(name);
-                    }
+                    if (!name.isEmpty()) createGroup(name);
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
@@ -176,7 +194,6 @@ public class CollectionFragment extends Fragment {
 
     private void showGroupOptions(Group group) {
         String[] options = {"Rename", "Delete"};
-
         new AlertDialog.Builder(getContext())
                 .setTitle(group.getName())
                 .setItems(options, (d, which) -> {
@@ -196,16 +213,9 @@ public class CollectionFragment extends Fragment {
                 .setView(input)
                 .setPositiveButton("Save", (d, w) -> {
                     String name = input.getText().toString().trim();
-                    if (!name.isEmpty()) {
-                        renameGroup(group, name);
-                    }
+                    if (!name.isEmpty()) renameGroup(group, name);
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
-    }
-    @Override
-    public void onResume() {
-        super.onResume();
-        loadGroups();   // 🔥 refresh when coming back
     }
 }

@@ -26,6 +26,9 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+// FIX: Added dirty-flag pattern (needsRefresh) so onResume() only reloads the card
+// list when the user has added or removed a card. The original called loadGroupCards()
+// unconditionally on every resume — including app-switching and screen unlock.
 public class CollectionDetailActivity extends AppCompatActivity {
 
     String groupId;
@@ -36,25 +39,24 @@ public class CollectionDetailActivity extends AppCompatActivity {
     CardAdapter adapter;
     List<Card> cardList = new ArrayList<>();
 
-    // ✅ ADDED
     TextView txtTitle;
     GroupApiManager api;
+
+    // FIX: dirty flag — prevents redundant reloads on incidental resumes
+    private boolean needsRefresh = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_collection_detail);
 
-        groupId = getIntent().getStringExtra("group_id");
-        session = new SessionManager(this);
-
-        // ✅ ADDED
-        api = new GroupApiManager();
+        groupId   = getIntent().getStringExtra("group_id");
+        session   = new SessionManager(this);
+        api       = new GroupApiManager();
         groupName = getIntent().getStringExtra("group_name");
 
         txtTitle = findViewById(R.id.txtTitle);
         txtTitle.setText(groupName);
-
 
         recyclerView = findViewById(R.id.recyclerCards);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
@@ -64,13 +66,13 @@ public class CollectionDetailActivity extends AppCompatActivity {
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
 
         findViewById(R.id.btnAdd).setOnClickListener(v -> {
+            // FIX: mark dirty so the list reloads when we return from AddCard
+            needsRefresh = true;
             startActivity(new Intent(this, AddCardToCollectionActivity.class)
                     .putExtra("group_id", groupId));
         });
 
-        findViewById(R.id.btnMore).setOnClickListener(v -> {
-            showCollectionOptions();
-        });
+        findViewById(R.id.btnMore).setOnClickListener(v -> showCollectionOptions());
 
         loadGroupCards();
     }
@@ -78,16 +80,21 @@ public class CollectionDetailActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        loadGroupCards();
+        // FIX: only reload if a mutation may have happened
+        if (needsRefresh) {
+            loadGroupCards();
+        }
     }
 
     private void loadGroupCards() {
+        needsRefresh = false; // FIX: clear before the call
         ApiService apiService = ApiClient.getClient().create(ApiService.class);
 
         apiService.getCardsInGroup(groupId, "Bearer " + session.getToken())
                 .enqueue(new Callback<List<Card>>() {
                     @Override
                     public void onResponse(Call<List<Card>> call, Response<List<Card>> response) {
+                        if (isFinishing() || isDestroyed()) return;
                         if (response.isSuccessful() && response.body() != null) {
                             cardList.clear();
                             cardList.addAll(response.body());
@@ -97,15 +104,17 @@ public class CollectionDetailActivity extends AppCompatActivity {
 
                     @Override
                     public void onFailure(Call<List<Card>> call, Throwable t) {
-                        Toast.makeText(CollectionDetailActivity.this,
-                                "Failed to load collection", Toast.LENGTH_SHORT).show();
+                        if (!isFinishing()) {
+                            needsRefresh = true; // FIX: allow retry next resume on failure
+                            Toast.makeText(CollectionDetailActivity.this,
+                                    "Failed to load collection", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
     }
 
     private void showCollectionOptions() {
         String[] options = {"Rename", "Delete"};
-
         new AlertDialog.Builder(this)
                 .setTitle("Collection Options")
                 .setItems(options, (d, which) -> {
@@ -118,16 +127,14 @@ public class CollectionDetailActivity extends AppCompatActivity {
     private void showRenameDialog() {
         EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
-        input.setText(txtTitle.getText().toString()); // now works
+        input.setText(txtTitle.getText().toString());
 
         new AlertDialog.Builder(this)
                 .setTitle("Rename Collection")
                 .setView(input)
                 .setPositiveButton("Save", (d, w) -> {
                     String name = input.getText().toString().trim();
-                    if (!name.isEmpty()) {
-                        renameCollection(name);
-                    }
+                    if (!name.isEmpty()) renameCollection(name);
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
@@ -137,12 +144,13 @@ public class CollectionDetailActivity extends AppCompatActivity {
         api.renameGroup(session, groupId, newName, new GroupApiManager.SimpleCallback() {
             @Override
             public void onDone() {
-                txtTitle.setText(newName);
+                if (!isFinishing()) txtTitle.setText(newName);
             }
 
             @Override
             public void onError(String msg) {
-                Toast.makeText(CollectionDetailActivity.this, msg, Toast.LENGTH_SHORT).show();
+                if (!isFinishing())
+                    Toast.makeText(CollectionDetailActivity.this, msg, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -151,9 +159,7 @@ public class CollectionDetailActivity extends AppCompatActivity {
         new AlertDialog.Builder(this)
                 .setTitle("Delete this collection?")
                 .setMessage("This cannot be undone.")
-                .setPositiveButton("Delete", (d, w) -> {
-                    deleteCollection();
-                })
+                .setPositiveButton("Delete", (d, w) -> deleteCollection())
                 .setNegativeButton("Cancel", null)
                 .show();
     }
@@ -161,13 +167,12 @@ public class CollectionDetailActivity extends AppCompatActivity {
     private void deleteCollection() {
         api.deleteGroup(session, groupId, new GroupApiManager.SimpleCallback() {
             @Override
-            public void onDone() {
-                finish();
-            }
+            public void onDone() { finish(); }
 
             @Override
             public void onError(String msg) {
-                Toast.makeText(CollectionDetailActivity.this, msg, Toast.LENGTH_SHORT).show();
+                if (!isFinishing())
+                    Toast.makeText(CollectionDetailActivity.this, msg, Toast.LENGTH_SHORT).show();
             }
         });
     }

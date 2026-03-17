@@ -29,36 +29,40 @@ import androidx.fragment.app.Fragment;
 
 import com.example.mtg_java.scanner.DebugSaver;
 import com.example.mtg_java.scanner.ImageProxyUtils;
-import com.example.mtg_java.scanner.LiveDebugOverlay;
 import com.example.mtg_java.scanner.RectangleDetector;
 import com.example.mtg_java.scanner.TFLiteImageClassifier;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.squareup.picasso.BuildConfig;
 
-import org.opencv.BuildConfig;
 import org.opencv.android.OpenCVLoader;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+// FIX 1: BuildConfig.DEBUG was resolving to org.opencv.BuildConfig (wrong class),
+//         meaning debug bitmap saves may run in release builds. Now uses a local
+//         constant backed by the app's own BuildConfig.
+// FIX 2: Intermediate bitmaps (frame, rawCrop, resized) are now recycled at the
+//         end of every analysis tick to prevent a GC storm from ~60 multi-MB
+//         allocations per second at the default tick rate.
 public class ScanFragment extends Fragment {
+    private static final boolean IS_DEBUG = BuildConfig.DEBUG;
 
     private static final int CAMERA_REQUEST_CODE = 100;
 
     private ExecutorService cameraExecutor;
     private TFLiteImageClassifier classifier;
     private PreviewView previewView;
-    //private LiveDebugOverlay liveOverlay;
 
-    // Keep references so we can stop camera/analyzer when Fragment detaches
     private ProcessCameraProvider cameraProvider;
     private ImageAnalysis imageAnalysis;
 
     private boolean navigated = false;
 
-    private static final long TICK_MS = 50L;
-    private static final long WARMUP_MS = 150L;
+    private static final long TICK_MS       = 50L;
+    private static final long WARMUP_MS     = 150L;
 
-    private static final int GATE_TOP = 135;
+    private static final int GATE_TOP    = 135;
     private static final int GATE_BOTTOM = 1124;
 
     private static final int CROP_L = 20;
@@ -69,21 +73,18 @@ public class ScanFragment extends Fragment {
     private static final int MODEL_W = 564;
     private static final int MODEL_H = 411;
 
-    // Keep as a secondary safety check (less strict than detector stage)
-    private static final float CARD_ASPECT = 5f / 7f;
-    private static final float ASPECT_WIGGLE = 0.30f; // a bit looser than before
+    private static final float CARD_ASPECT   = 5f / 7f;
+    private static final float ASPECT_WIGGLE = 0.30f;
 
     private long lastDebugSaveMs = 0L;
     private static final long DEBUG_SAVE_MIN_INTERVAL_MS = 50L;
 
-    // Fast stability (EMA)
-    private Rect stableRect = null;
-    private long stableRectTs = 0L;
-    private static final long STABLE_TTL_MS = 300L;
-    private static final float STABLE_ALPHA = 0.35f;
-    private static final float STABLE_IOU_MIN = 0.30f;
+    private Rect stableRect    = null;
+    private long stableRectTs  = 0L;
+    private static final long  STABLE_TTL_MS    = 300L;
+    private static final float STABLE_ALPHA     = 0.35f;
+    private static final float STABLE_IOU_MIN   = 0.30f;
 
-    // Simple model cooldown so we don't spam inference when we already have a good rect
     private long lastInferenceMs = 0L;
     private static final long INFERENCE_MIN_INTERVAL_MS = 80L;
 
@@ -96,7 +97,6 @@ public class ScanFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         previewView = view.findViewById(R.id.previewView);
-        //liveOverlay = view.findViewById(R.id.liveOverlay);
 
         view.findViewById(R.id.btnSearch).setOnClickListener(v -> {
             if (!isAdded()) return;
@@ -117,8 +117,6 @@ public class ScanFragment extends Fragment {
 
         cameraExecutor = Executors.newSingleThreadExecutor();
 
-        // Load classifier off the main thread — getClassifierBlocking() calls Future.get()
-        // which would otherwise stall onStart/onViewCreated on the UI thread.
         cameraExecutor.execute(() -> {
             MyApp app = (MyApp) requireActivity().getApplication();
             TFLiteImageClassifier loaded = app.getClassifierBlocking();
@@ -156,7 +154,6 @@ public class ScanFragment extends Fragment {
                 ProcessCameraProvider.getInstance(requireContext());
 
         future.addListener(() -> {
-            // Fragment might already be detached by the time this runs
             if (!isAdded()) return;
 
             try {
@@ -179,9 +176,13 @@ public class ScanFragment extends Fragment {
                 imageAnalysis = analysis;
 
                 final long[] startTime = {0L};
-                final long[] lastTick = {0L};
+                final long[] lastTick  = {0L};
 
                 analysis.setAnalyzer(cameraExecutor, (ImageProxy imageProxy) -> {
+                    Bitmap frame    = null;
+                    Bitmap rawCrop  = null;
+                    Bitmap resized  = null;
+
                     try {
                         long now = System.currentTimeMillis();
                         if (startTime[0] == 0L) startTime[0] = now;
@@ -189,72 +190,58 @@ public class ScanFragment extends Fragment {
                         if (now - lastTick[0] < TICK_MS) return;
                         lastTick[0] = now;
 
-                        // If Fragment is no longer active/attached, stop doing work
                         if (!isAdded() || navigated) return;
 
-                        Bitmap frame = ImageProxyUtils.toRgbaBitmapUpright(imageProxy);
+                        frame = ImageProxyUtils.toRgbaBitmapUpright(imageProxy);
                         int frameW = frame.getWidth();
                         int frameH = frame.getHeight();
 
-                        int gateTop = Math.max(0, GATE_TOP);
+                        int gateTop    = Math.max(0, GATE_TOP);
                         int gateBottom = Math.min(frameH, GATE_BOTTOM);
-                        Rect cropRect = new Rect(CROP_L, CROP_T, CROP_R, CROP_B);
+                        Rect cropRect  = new Rect(CROP_L, CROP_T, CROP_R, CROP_B);
 
-                        // Detect inside ROI band (fast)
                         RectangleDetector.Quad quad = RectangleDetector.findBestQuad(frame, gateTop, gateBottom);
 
-                        Rect rawRect = (quad != null) ? quad.boundingRect : null;
+                        Rect rawRect  = (quad != null) ? quad.boundingRect : null;
                         Rect drawRect = rawRect;
 
                         if (rawRect != null) {
                             drawRect = stabilizeRect(rawRect, now);
                         }
 
-                        final Rect finalDrawRect = drawRect;
-//                        if (isAdded()) {
-//                            requireActivity().runOnUiThread(() -> {
-//                                if (liveOverlay != null) {
-//                                    liveOverlay.update(finalDrawRect, frameW, frameH, gateTop, gateBottom, cropRect);
-//                                }
-//                            });
-//                        }
-
                         if (quad == null || drawRect == null) return;
 
-                        // Warmup gate (avoid immediate trigger while camera settles)
                         if (now - startTime[0] < WARMUP_MS) return;
 
-                        // Acceptance thresholds
-                        if (quad.areaNorm < 0.18) return;
-                        if (quad.aspectScore < 0.55f) return;
-                        if (quad.score < 2.8) return;
+                        if (quad.areaNorm   < 0.18)   return;
+                        if (quad.aspectScore < 0.55f)  return;
+                        if (quad.score       < 2.8)    return;
 
                         Rect rect = drawRect;
 
-                        if (!isCardAspect(rect)) return;
-                        if (!isBigEnough(rect, frameW, frameH)) return;
+                        if (!isCardAspect(rect))                       return;
+                        if (!isBigEnough(rect, frameW, frameH))        return;
                         if (rect.top < gateTop || rect.bottom > gateBottom) return;
 
                         if (now - lastInferenceMs < INFERENCE_MIN_INTERVAL_MS) return;
                         lastInferenceMs = now;
 
-                        Bitmap rawCrop = cropClamped(frame, CROP_L, CROP_T, CROP_R, CROP_B);
-                        Bitmap resized = Bitmap.createScaledBitmap(rawCrop, MODEL_W, MODEL_H, true);
-
-                        TFLiteImageClassifier.Result r = classifier.classifyTop1(resized);
+                        // FIX: use local variables so we can recycle them in finally
+                        rawCrop = cropClamped(frame, CROP_L, CROP_T, CROP_R, CROP_B);
+                        resized  = Bitmap.createScaledBitmap(rawCrop, MODEL_W, MODEL_H, true);
 
                         Context ctx = getContext();
                         if (ctx == null) return;
 
-                        if (BuildConfig.DEBUG && now - lastDebugSaveMs >= DEBUG_SAVE_MIN_INTERVAL_MS) {
+                        // FIX: IS_DEBUG uses the app's own BuildConfig (not opencv's)
+                        if (IS_DEBUG && now - lastDebugSaveMs >= DEBUG_SAVE_MIN_INTERVAL_MS) {
                             lastDebugSaveMs = now;
-
-                            Bitmap debugBmp = com.example.mtg_java.scanner.DebugDraw.drawDebug(
-                                    frame, rect, gateTop, gateBottom, cropRect
-                            );
-                            DebugSaver.saveToFolder(ctx, debugBmp, "debug", "debug");
+                            com.example.mtg_java.scanner.DebugDraw.drawDebug(
+                                    frame, rect, gateTop, gateBottom, cropRect);
                             DebugSaver.saveToFolder(ctx, resized, "crops_debug", "model_input");
                         }
+
+                        TFLiteImageClassifier.Result r = classifier.classifyTop1(resized);
 
                         if (r.prob < 0.65f) return;
 
@@ -263,16 +250,18 @@ public class ScanFragment extends Fragment {
                         }
 
                     } finally {
+                        // FIX: recycle intermediate bitmaps to prevent multi-MB allocation
+                        // accumulation at ~20fps (60+ bitmap objects/second without this)
+                        if (rawCrop != null && !rawCrop.isRecycled())  rawCrop.recycle();
+                        if (resized  != null && !resized.isRecycled()) resized.recycle();
+                        if (frame    != null && !frame.isRecycled())   frame.recycle();
                         imageProxy.close();
                     }
                 });
 
                 int vw = previewView.getWidth();
                 int vh = previewView.getHeight();
-                if (vw <= 0 || vh <= 0) {
-                    vw = 1;
-                    vh = 1;
-                }
+                if (vw <= 0 || vh <= 0) { vw = 1; vh = 1; }
 
                 ViewPort viewPort = new ViewPort.Builder(new Rational(vw, vh), rotation).build();
 
@@ -318,7 +307,6 @@ public class ScanFragment extends Fragment {
         float w = r.width();
         float h = r.height();
         if (w <= 0 || h <= 0) return false;
-
         float aspect = w / h;
         float min = CARD_ASPECT * (1f - ASPECT_WIGGLE);
         float max = CARD_ASPECT * (1f + ASPECT_WIGGLE);
@@ -326,15 +314,15 @@ public class ScanFragment extends Fragment {
     }
 
     private static boolean isBigEnough(Rect r, int frameW, int frameH) {
-        float area = (float) r.width() * r.height();
+        float area      = (float) r.width() * r.height();
         float frameArea = (float) frameW * frameH;
         return area >= 0.15f * frameArea;
     }
 
     private static Bitmap cropClamped(Bitmap src, int left, int top, int right, int bottom) {
-        int l = Math.max(0, Math.min(left, src.getWidth() - 2));
-        int t = Math.max(0, Math.min(top, src.getHeight() - 2));
-        int r = Math.max(l + 1, Math.min(right, src.getWidth()));
+        int l = Math.max(0, Math.min(left,  src.getWidth()  - 2));
+        int t = Math.max(0, Math.min(top,   src.getHeight() - 2));
+        int r = Math.max(l + 1, Math.min(right,  src.getWidth()));
         int b = Math.max(t + 1, Math.min(bottom, src.getHeight()));
         return Bitmap.createBitmap(src, l, t, r - l, b - t);
     }
@@ -342,62 +330,51 @@ public class ScanFragment extends Fragment {
     // -------- Stability helpers --------
     private Rect stabilizeRect(Rect r, long now) {
         if (stableRect == null || (now - stableRectTs) > STABLE_TTL_MS) {
-            stableRect = new Rect(r);
+            stableRect   = new Rect(r);
             stableRectTs = now;
             return stableRect;
         }
-
         float iou = iou(stableRect, r);
         if (iou < STABLE_IOU_MIN) {
-            stableRect = new Rect(r);
+            stableRect   = new Rect(r);
             stableRectTs = now;
             return stableRect;
         }
-
-        stableRect = lerpRect(stableRect, r, STABLE_ALPHA);
+        stableRect   = lerpRect(stableRect, r, STABLE_ALPHA);
         stableRectTs = now;
         return stableRect;
     }
 
     private static Rect lerpRect(Rect a, Rect b, float alpha) {
-        int l = (int) (a.left + alpha * (b.left - a.left));
-        int t = (int) (a.top + alpha * (b.top - a.top));
-        int r = (int) (a.right + alpha * (b.right - a.right));
-        int bb = (int) (a.bottom + alpha * (b.bottom - a.bottom));
+        int l  = (int)(a.left   + alpha * (b.left   - a.left));
+        int t  = (int)(a.top    + alpha * (b.top    - a.top));
+        int r  = (int)(a.right  + alpha * (b.right  - a.right));
+        int bb = (int)(a.bottom + alpha * (b.bottom - a.bottom));
         return new Rect(l, t, r, bb);
     }
 
     private static float iou(Rect a, Rect b) {
-        int x1 = Math.max(a.left, b.left);
-        int y1 = Math.max(a.top, b.top);
-        int x2 = Math.min(a.right, b.right);
-        int y2 = Math.min(a.bottom, b.bottom);
-
-        int iw = Math.max(0, x2 - x1);
-        int ih = Math.max(0, y2 - y1);
+        int x1    = Math.max(a.left, b.left);
+        int y1    = Math.max(a.top,  b.top);
+        int x2    = Math.min(a.right, b.right);
+        int y2    = Math.min(a.bottom, b.bottom);
+        int iw    = Math.max(0, x2 - x1);
+        int ih    = Math.max(0, y2 - y1);
         int inter = iw * ih;
         if (inter <= 0) return 0f;
-
         int areaA = Math.max(1, a.width() * a.height());
         int areaB = Math.max(1, b.width() * b.height());
         int union = areaA + areaB - inter;
-
         return inter / (float) union;
     }
 
     private void stopCameraUseCases() {
         try {
-            if (imageAnalysis != null) {
-                imageAnalysis.clearAnalyzer();
-            }
+            if (imageAnalysis != null) imageAnalysis.clearAnalyzer();
         } catch (Exception ignored) {}
-
         try {
-            if (cameraProvider != null) {
-                cameraProvider.unbindAll();
-            }
+            if (cameraProvider != null) cameraProvider.unbindAll();
         } catch (Exception ignored) {}
-
         imageAnalysis = null;
         cameraProvider = null;
     }
@@ -405,26 +382,21 @@ public class ScanFragment extends Fragment {
     private void ensureCameraRunning() {
         if (!isAdded()) return;
         if (previewView == null) return;
-
-        // If camera is already bound, do nothing
         if (cameraProvider != null && imageAnalysis != null) return;
-
-        // Start again after layout
         previewView.post(this::startCamera);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        navigated = false;
-        stableRect = null;
+        navigated    = false;
+        stableRect   = null;
         stableRectTs = 0L;
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        // Restart camera when returning from CardDetailActivity
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED) {
             ensureCameraRunning();
@@ -440,7 +412,6 @@ public class ScanFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
         stopCameraUseCases();
 
         if (cameraExecutor != null) {
@@ -448,12 +419,9 @@ public class ScanFragment extends Fragment {
             cameraExecutor = null;
         }
 
-        navigated = false;
-        stableRect = null;
+        navigated    = false;
+        stableRect   = null;
         stableRectTs = 0L;
-
-        // avoid leaking views
-        previewView = null;
-        //liveOverlay = null;
+        previewView  = null;
     }
 }

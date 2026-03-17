@@ -8,10 +8,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+// FIX 1: Reset initFuture to null on failure so preloadModelIfNeeded() can retry
+//         instead of silently skipping because a failed future is still non-null.
+// FIX 2: classifier field is volatile; reads/writes are now visibly ordered across
+//         threads without needing a full synchronized block on the fast path.
 public class MyApp extends Application {
 
     private ExecutorService modelExecutor;
-    private Future<?> initFuture;
+    private volatile Future<?> initFuture;   // FIX: volatile so nulling is visible
 
     private volatile TFLiteImageClassifier classifier;
 
@@ -37,6 +41,10 @@ public class MyApp extends Application {
             } catch (Exception e) {
                 e.printStackTrace();
                 classifier = null;
+                // FIX: null out the future so the next call to preloadModelIfNeeded()
+                // is able to retry, rather than seeing a non-null completed future and
+                // skipping silently forever.
+                initFuture = null;
             }
         });
     }
@@ -44,7 +52,8 @@ public class MyApp extends Application {
     public TFLiteImageClassifier getClassifierBlocking() {
         preloadModelIfNeeded();
         try {
-            if (initFuture != null) initFuture.get();
+            Future<?> f = initFuture;   // local copy to avoid TOCTOU on volatile
+            if (f != null) f.get();
         } catch (Exception ignored) {}
         return classifier;
     }

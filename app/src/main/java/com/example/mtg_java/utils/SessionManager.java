@@ -3,12 +3,14 @@ package com.example.mtg_java.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+// FIX: Removed stored `editor` field. SharedPreferences.Editor is lightweight and
+// should be obtained fresh per-write to avoid concurrent-write races where a late
+// apply() silently clobbers a newer value written by another thread.
 public class SessionManager {
 
     private static final String PREF_NAME = "user_session";
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_LOGGED_IN = "is_logged_in";
-
     private static final String KEY_TOKEN = "jwt_token";
     private static final String KEY_USERNAME = "username";
     private static final String KEY_EMAIL = "email";
@@ -16,13 +18,12 @@ public class SessionManager {
     private static SessionManager instance;
 
     private final SharedPreferences prefs;
-    private final SharedPreferences.Editor editor;
 
     public SessionManager(Context context) {
-        // Always use ApplicationContext so this singleton never leaks an Activity
         prefs = context.getApplicationContext()
                 .getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        editor = prefs.edit();
+        // FIX: No longer storing a shared editor field. Each write creates its own
+        // editor inline, ensuring isolated, race-free commits.
     }
 
     public static synchronized SessionManager getInstance(Context context) {
@@ -38,70 +39,62 @@ public class SessionManager {
         this(context);
     }
 
-    // 🔹 EXISTING (unchanged)
     public void setLoggedIn(boolean loggedIn) {
-        editor.putBoolean(KEY_LOGGED_IN, loggedIn);
-        editor.apply();
+        // FIX: fresh editor per call
+        prefs.edit().putBoolean(KEY_LOGGED_IN, loggedIn).apply();
     }
+
     public void saveUserId(String userId) {
-        editor.putString(KEY_USER_ID, userId);
-        editor.apply();
+        prefs.edit().putString(KEY_USER_ID, userId).apply();
     }
 
     public String getUserId() {
         return prefs.getString(KEY_USER_ID, null);
     }
 
-    // 🔹 EXISTING (unchanged)
     public boolean isLoggedIn() {
         return prefs.getBoolean(KEY_LOGGED_IN, false);
     }
 
-    // ✅ ADDED
     public void saveToken(String token) {
-        editor.putString(KEY_TOKEN, token);
-        editor.apply();
+        prefs.edit().putString(KEY_TOKEN, token).apply();
     }
+
     public boolean isSessionValid() {
         String token = getToken();
         return token != null && !isTokenExpired();
     }
+
     public boolean isTokenExpired() {
         String token = getToken();
-
         if (token == null) return true;
-
         try {
             String[] parts = token.split("\\.");
             String payload = parts[1];
-
             byte[] decodedBytes = android.util.Base64.decode(payload, android.util.Base64.URL_SAFE);
             String decoded = new String(decodedBytes);
-
             org.json.JSONObject obj = new org.json.JSONObject(decoded);
-
             long exp = obj.getLong("exp");
             long currentTime = System.currentTimeMillis() / 1000;
-
             return currentTime > exp;
-
         } catch (Exception e) {
             return true;
         }
     }
 
-    // ✅ ADDED
     public String getToken() {
         return prefs.getString(KEY_TOKEN, null);
     }
+
     public void saveUser(String username, String email) {
-        editor.putString(KEY_USERNAME, username);
-        editor.putString(KEY_EMAIL, email);
-        editor.apply();
+        prefs.edit()
+                .putString(KEY_USERNAME, username)
+                .putString(KEY_EMAIL, email)
+                .apply();
     }
+
     public void clearSession() {
-        editor.clear();
-        editor.apply();
+        prefs.edit().clear().apply();
     }
 
     public String getUsername() {
@@ -112,9 +105,7 @@ public class SessionManager {
         return prefs.getString(KEY_EMAIL, "");
     }
 
-    // 🔹 EXISTING (unchanged)
     public void logout() {
-        editor.clear();
-        editor.apply();
+        prefs.edit().clear().apply();
     }
 }

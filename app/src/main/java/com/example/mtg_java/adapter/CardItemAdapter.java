@@ -20,8 +20,8 @@ import java.util.List;
 
 public class CardItemAdapter extends RecyclerView.Adapter<CardItemAdapter.ViewHolder> {
 
-    private Context context;
-    private List<CardResponse.CardItem> list;
+    private final Context context;
+    private final List<CardResponse.CardItem> list;
 
     public CardItemAdapter(Context context, List<CardResponse.CardItem> list) {
         this.context = context;
@@ -38,8 +38,13 @@ public class CardItemAdapter extends RecyclerView.Adapter<CardItemAdapter.ViewHo
     @Override
     public void onBindViewHolder(@NonNull ViewHolder h, int i) {
         CardResponse.CardItem c = list.get(i);
-        h.txtName.setText(c.name);
-        Glide.with(context).load(c.imageUrl).into(h.imgCard);
+        h.txtName.setText(c.name != null ? c.name : "-");
+
+        // FIX: guard against null imageUrl before handing to Glide.
+        // A null URL would silently create a failed Glide request on every bind.
+        if (c.imageUrl != null && !c.imageUrl.isEmpty()) {
+            Glide.with(context).load(c.imageUrl).into(h.imgCard);
+        }
 
         h.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, CardDetailActivity.class);

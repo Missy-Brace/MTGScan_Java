@@ -175,4 +175,11 @@ public class HomeFragment extends Fragment {
         tvCards = null;
         imgAvatar = null;
     }
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (adapter != null && adapter.getItemCount() == 0) {
+            loadNews();
+        }
+    }
 }

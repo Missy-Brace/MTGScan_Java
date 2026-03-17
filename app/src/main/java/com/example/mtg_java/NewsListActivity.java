@@ -1,8 +1,5 @@
 package com.example.mtg_java;
 
-
-
-
 import android.os.Bundle;
 import android.widget.ImageView;
 
@@ -15,9 +12,13 @@ import com.example.mtg_java.adapter.NewsAdapter;
 import com.example.mtg_java.api.NewsApiManager;
 import com.example.mtg_java.model.NewsResponse;
 
+// FIX: Store the NewsApiManager as a field and cancel the active call in onDestroy().
+// Previously the manager was a local variable, making cancel() unreachable and leaving
+// an in-flight Retrofit callback that would fire against a destroyed activity.
 public class NewsListActivity extends AppCompatActivity {
 
     private RecyclerView recyclerNews;
+    private NewsApiManager api; // FIX: field so we can cancel in onDestroy
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,16 +32,15 @@ public class NewsListActivity extends AppCompatActivity {
 
         btnBack.setOnClickListener(v -> finish());
 
+        api = new NewsApiManager(); // FIX: assign to field
         loadNews();
     }
 
     private void loadNews() {
-
-        NewsApiManager api = new NewsApiManager();
-
         api.fetchNews(50, 0, new NewsApiManager.NewsCallback() {
             @Override
             public void onSuccess(NewsResponse response) {
+                if (isFinishing() || isDestroyed()) return; // FIX: guard against destroyed activity
                 recyclerNews.setAdapter(
                         new NewsAdapter(response.getItems(), R.layout.item_news_vertical)
                 );
@@ -49,5 +49,12 @@ public class NewsListActivity extends AppCompatActivity {
             @Override
             public void onError(String message) { }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // FIX: cancel the Retrofit call so the callback never fires after destroy
+        if (api != null) api.cancel();
     }
 }
