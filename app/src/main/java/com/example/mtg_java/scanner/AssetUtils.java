@@ -12,9 +12,10 @@ public final class AssetUtils {
     private AssetUtils() {}
 
     public static MappedByteBuffer loadMappedFile(Context context, String assetName) throws IOException {
-        AssetFileDescriptor afd = context.getAssets().openFd(assetName);
-        try (FileInputStream fis = new FileInputStream(afd.getFileDescriptor())) {
-            FileChannel channel = fis.getChannel();
+        try (AssetFileDescriptor afd = context.getAssets().openFd(assetName);
+             FileInputStream fis = new FileInputStream(afd.getFileDescriptor());
+             FileChannel channel = fis.getChannel()) {
+
             long startOffset = afd.getStartOffset();
             long declaredLength = afd.getDeclaredLength();
             return channel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);

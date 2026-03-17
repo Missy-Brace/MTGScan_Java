@@ -24,8 +24,12 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsVH> {
     private int layoutId;   // 🔥 layout variable
 
     public NewsAdapter(List<News> newsList, @LayoutRes int layoutId) {
-        this.newsList = newsList;
+        this.newsList = newsList != null ? newsList : new java.util.ArrayList<>();
         this.layoutId = layoutId;
+    }
+
+    public void updateData(List<News> newList) {
+        this.newsList = newList;
     }
 
     @NonNull
@@ -68,17 +72,19 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsVH> {
         }
 
         if (holder.imgNews != null) {
-            Glide.with(holder.itemView.getContext())
+            Glide.with(holder.imgNews)
                     .load(news.getImage())
                     .placeholder(R.drawable.placeholder)
                     .error(R.drawable.placeholder)
+                    .override(400, 300)
+                    .centerCrop()
                     .into(holder.imgNews);
         }
     }
 
     @Override
     public int getItemCount() {
-        return newsList != null ? newsList.size() : 0;
+        return newsList.size();
     }
 
     static class NewsVH extends RecyclerView.ViewHolder {

@@ -2,6 +2,7 @@ package com.example.mtg_java;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
@@ -26,33 +27,41 @@ public class LoginActivity extends AppCompatActivity {
     private ProgressBar progressBar;
 
     private AuthManager authManager;
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectLeakedClosableObjects()
+                        .penaltyLog()
+                        .build()
+        );
         super.onCreate(savedInstanceState);
 
-        // ✅ check session FIRST
-        SessionManager sessionManager = new SessionManager(this);
+        sessionManager = new SessionManager(this);
 
         if (sessionManager.isSessionValid()) {
-            startActivity(new Intent(LoginActivity.this, MainActivity.class));
+            startActivity(new Intent(this, MainActivity.class));
             finish();
             return;
         }
-        //if (sessionManager.isLoggedIn()) {
-          //  startActivity(new Intent(LoginActivity.this, MainActivity.class));
-            //finish();
-            //return;
-        //}
 
         setContentView(R.layout.activity_login);
+        findViewById(R.id.etEmail);
+        findViewById(R.id.etPassword);
+        findViewById(R.id.btnLogin);
+        initUI();
+    }
 
+    private void initUI() {
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
         btnGoSignup = findViewById(R.id.btnGoSignup);
-        String text = "Don't have an account? Signup";
+        progressBar = findViewById(R.id.progressBar);
 
+        String text = "Don't have an account? Signup";
         SpannableString spannable = new SpannableString(text);
 
         spannable.setSpan(
@@ -63,9 +72,8 @@ public class LoginActivity extends AppCompatActivity {
         );
 
         btnGoSignup.setText(spannable);
-        progressBar = findViewById(R.id.progressBar);
 
-        authManager = new AuthManager(this);
+        authManager = new AuthManager(getApplicationContext());
 
         btnLogin.setOnClickListener(v -> handleLogin());
 
@@ -78,7 +86,6 @@ public class LoginActivity extends AppCompatActivity {
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
-        // 🔹 Email validation
         if (TextUtils.isEmpty(email)) {
             etEmail.setError("Email is required");
             etEmail.requestFocus();
@@ -91,7 +98,6 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // 🔹 Password validation
         if (TextUtils.isEmpty(password)) {
             etPassword.setError("Password is required");
             etPassword.requestFocus();
@@ -104,16 +110,15 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        btnLogin.setEnabled(false);
         progressBar.setVisibility(View.VISIBLE);
 
         authManager.login(email, password, new AuthManager.AuthCallback() {
 
             @Override
             public void onSuccess(String token, String userId, String username, String email, String finalProfileImage) {
+                btnLogin.setEnabled(true);
                 progressBar.setVisibility(View.GONE);
-                Log.d("MY_TOKEN", token);
-
-                SessionManager sessionManager = new SessionManager(LoginActivity.this);
                 sessionManager.setLoggedIn(true);
                 sessionManager.saveUserId(userId);
                 sessionManager.saveToken(token);
@@ -125,6 +130,7 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void onError(String message) {
+                btnLogin.setEnabled(true);
                 progressBar.setVisibility(View.GONE);
                 Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();
             }

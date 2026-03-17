@@ -12,21 +12,24 @@ public class FileUtils {
 
     public static File getFile(Context context, Uri uri) throws IOException {
 
-        InputStream inputStream = context.getContentResolver().openInputStream(uri);
         File tempFile = File.createTempFile("upload", ".jpg", context.getCacheDir());
         tempFile.deleteOnExit();
 
-        FileOutputStream out = new FileOutputStream(tempFile);
+        try (InputStream inputStream = context.getContentResolver().openInputStream(uri);
+             FileOutputStream out = new FileOutputStream(tempFile)) {
 
-        byte[] buffer = new byte[4096];
-        int read;
-        while ((read = inputStream.read(buffer)) != -1) {
-            out.write(buffer, 0, read);
+            if (inputStream == null) {
+                throw new IOException("Failed to open input stream");
+            }
+
+            byte[] buffer = new byte[4096];
+            int read;
+            while ((read = inputStream.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+
+            out.flush();
         }
-
-        out.flush();
-        out.close();
-        inputStream.close();
 
         return tempFile;
     }

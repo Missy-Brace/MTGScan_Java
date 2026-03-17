@@ -14,18 +14,15 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.mtg_java.GroupApiManager;
-import com.example.mtg_java.NewsListActivity;
-import com.example.mtg_java.R;
+import com.bumptech.glide.Glide;
 import com.example.mtg_java.adapter.NewsAdapter;
 import com.example.mtg_java.api.NewsApiManager;
 import com.example.mtg_java.model.Group;
 import com.example.mtg_java.model.NewsResponse;
 import com.example.mtg_java.utils.SessionManager;
 
+import java.util.ArrayList;
 import java.util.List;
-
-import com.bumptech.glide.Glide;
 
 public class HomeFragment extends Fragment {
 
@@ -33,7 +30,12 @@ public class HomeFragment extends Fragment {
     private TextView tvCollections;
     private TextView tvCards;
     private ImageView imgAvatar;
+
     private AuthManager authManager;
+    private NewsApiManager newsApi;
+    private GroupApiManager groupApi;
+
+    private NewsAdapter adapter;
 
     @Nullable
     @Override
@@ -42,111 +44,89 @@ public class HomeFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_home, container, false);
-        TextView seeAll = view.findViewById(R.id.tvSeeAll);
-
-        seeAll.setOnClickListener(v -> {
-            startActivity(new Intent(getContext(), NewsListActivity.class));
-        });
-        ImageView btnSearch = view.findViewById(R.id.btnSearch);
-
-        btnSearch.setOnClickListener(v -> {
-
-            requireActivity()
-                    .getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.frame_layout, new BrowseFragment())
-                    .addToBackStack(null)
-                    .commit();
-
-        });
 
         newsRecycler = view.findViewById(R.id.newsRecycler);
         tvCollections = view.findViewById(R.id.tvCollections);
         tvCards = view.findViewById(R.id.tvCards);
-        SessionManager sessionManager = new SessionManager(getContext());
+        imgAvatar = view.findViewById(R.id.imgAvatar);
 
+        TextView seeAll = view.findViewById(R.id.tvSeeAll);
+        ImageView btnSearch = view.findViewById(R.id.btnSearch);
         TextView tvUsername = view.findViewById(R.id.tvUsername);
         TextView tvEmail = view.findViewById(R.id.tvEmail);
 
+        seeAll.setOnClickListener(v ->
+                startActivity(new Intent(getContext(), NewsListActivity.class))
+        );
+
+        btnSearch.setOnClickListener(v ->
+                requireActivity()
+                        .getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.frame_layout, new BrowseFragment())
+                        .addToBackStack(null)
+                        .commit()
+        );
+
+        SessionManager sessionManager = new SessionManager(getContext());
         tvUsername.setText("Hi, " + sessionManager.getUsername() + " 👋");
         tvEmail.setText(sessionManager.getEmail());
 
         newsRecycler.setLayoutManager(
-                new LinearLayoutManager(
-                        getContext(),
-                        LinearLayoutManager.HORIZONTAL,
-                        false
-                )
+                new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false)
         );
+
+        adapter = new NewsAdapter(new ArrayList<>(), R.layout.item_news_home);
+        newsRecycler.setAdapter(adapter);
+
+        newsApi = new NewsApiManager();
+        groupApi = new GroupApiManager();
+        authManager = new AuthManager(requireContext());
 
         loadNews();
         loadStats();
+        loadAvatar();
 
-        imgAvatar = view.findViewById(R.id.imgAvatar);
+        return view;
+    }
 
-        authManager = new AuthManager(requireContext());
-        authManager.getCurrentUser(new AuthManager.AuthCallback() {
+    private void loadNews() {
+        newsApi.fetchNews(10, 0, new NewsApiManager.NewsCallback() {
             @Override
-            public void onSuccess(String t, String id, String username, String email, String profileImage) {
+            public void onSuccess(NewsResponse response) {
                 if (!isAdded()) return;
 
                 requireActivity().runOnUiThread(() -> {
-                    if (profileImage != null && !profileImage.isEmpty()) {
-                        Glide.with(requireContext())
-                                .load(profileImage)
-                                .circleCrop()
-                                .into(imgAvatar);
-                    } else {
-                        imgAvatar.setImageResource(android.R.drawable.sym_def_app_icon);
-                    }
+                    adapter.updateData(response.getItems());
                 });
             }
 
             @Override
-            public void onError(String message) {
-                // optional: log or toast
-            }
-        });
-        loadAvatar();
-        return view;
-    }
-    private void loadNews() {
-
-        NewsApiManager api = new NewsApiManager();
-
-        api.fetchNews(10, 0, new NewsApiManager.NewsCallback() {
-            @Override
-            public void onSuccess(NewsResponse response) {
-
-                NewsAdapter adapter =
-                        new NewsAdapter(response.getItems(), R.layout.item_news_home);
-
-                newsRecycler.setAdapter(adapter);
-            }
-
-            @Override
             public void onError(String msg) {
+                // optional: log
             }
         });
     }
-    private void loadStats() {
 
-        GroupApiManager api = new GroupApiManager();
+    private void loadStats() {
         SessionManager session = new SessionManager(getContext());
 
-        api.getGroups(session, new GroupApiManager.ListCallback() {
+        groupApi.getGroups(session, new GroupApiManager.ListCallback() {
             @Override
             public void onSuccess(List<Group> result) {
+                if (!isAdded()) return;
 
-                int collectionCount = result.size();
+                requireActivity().runOnUiThread(() -> {
+                    int collectionCount = result.size();
 
-                int totalCards = 0;
-                for (Group g : result) {
-                    totalCards += g.getCardCount(); // uses your model
-                }
+                    int totalCards = 0;
+                    for (Group g : result) {
+                        totalCards += g.getCardCount();
+                    }
 
-                tvCollections.setText(String.valueOf(collectionCount));
-                tvCards.setText(String.valueOf(totalCards));
+                    tvCollections.setText(String.valueOf(collectionCount));
+                    tvCards.setText(String.valueOf(totalCards));
+                });
             }
 
             @Override
@@ -165,7 +145,7 @@ public class HomeFragment extends Fragment {
 
                 requireActivity().runOnUiThread(() -> {
                     if (profileImage != null && !profileImage.isEmpty()) {
-                        Glide.with(requireContext())
+                        Glide.with(imgAvatar)
                                 .load(profileImage)
                                 .circleCrop()
                                 .into(imgAvatar);
@@ -177,15 +157,17 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onError(String message) {
-                // log if you want
             }
         });
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        loadAvatar();
-    }
+    public void onDestroyView() {
+        super.onDestroyView();
 
+        //if (newsApi != null) newsApi.cancel(); // implement later
+        //if (groupApi != null) groupApi.cancel(); // optional
+
+        newsRecycler.setAdapter(null);
+    }
 }
