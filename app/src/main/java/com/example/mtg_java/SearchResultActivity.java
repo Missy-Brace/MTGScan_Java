@@ -81,6 +81,11 @@ public class SearchResultActivity extends AppCompatActivity {
         ).enqueue(new Callback<CardResponse>() {
             @Override
             public void onResponse(Call<CardResponse> call, Response<CardResponse> res) {
+                if (res.body() == null) {
+                    tvEmpty.setVisibility(View.VISIBLE);
+                    recyclerView.setVisibility(View.GONE);
+                    return;
+                }
                 List<CardResponse.CardItem> cards = res.body().items;
 
                 if (cards == null || cards.isEmpty()) {

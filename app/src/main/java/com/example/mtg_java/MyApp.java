@@ -52,4 +52,17 @@ public class MyApp extends Application {
     public boolean isModelReady() {
         return classifier != null;
     }
+
+    @Override
+    public void onTerminate() {
+        super.onTerminate();
+        if (classifier != null) {
+            classifier.close();
+            classifier = null;
+        }
+        if (modelExecutor != null) {
+            modelExecutor.shutdownNow();
+            modelExecutor = null;
+        }
+    }
 }

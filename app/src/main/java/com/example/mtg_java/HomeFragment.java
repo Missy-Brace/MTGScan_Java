@@ -68,7 +68,7 @@ public class HomeFragment extends Fragment {
                         .commit()
         );
 
-        SessionManager sessionManager = new SessionManager(getContext());
+        SessionManager sessionManager = SessionManager.getInstance(getContext());
         tvUsername.setText("Hi, " + sessionManager.getUsername() + " 👋");
         tvEmail.setText(sessionManager.getEmail());
 
@@ -109,7 +109,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void loadStats() {
-        SessionManager session = new SessionManager(getContext());
+        SessionManager session = SessionManager.getInstance(getContext());
 
         groupApi.getGroups(session, new GroupApiManager.ListCallback() {
             @Override
@@ -165,9 +165,14 @@ public class HomeFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
 
-        //if (newsApi != null) newsApi.cancel(); // implement later
-        //if (groupApi != null) groupApi.cancel(); // optional
+        if (newsApi != null) newsApi.cancel();
+        if (groupApi != null) groupApi.cancelGetGroups();
+        if (authManager != null) authManager.cancelGetCurrentUser();
 
         newsRecycler.setAdapter(null);
+        newsRecycler = null;
+        tvCollections = null;
+        tvCards = null;
+        imgAvatar = null;
     }
 }

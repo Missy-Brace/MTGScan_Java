@@ -9,17 +9,33 @@ public class SessionManager {
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_LOGGED_IN = "is_logged_in";
 
-    // ✅ ADDED (do not break old code)
     private static final String KEY_TOKEN = "jwt_token";
     private static final String KEY_USERNAME = "username";
     private static final String KEY_EMAIL = "email";
 
-    private SharedPreferences prefs;
-    private SharedPreferences.Editor editor;
+    private static SessionManager instance;
+
+    private final SharedPreferences prefs;
+    private final SharedPreferences.Editor editor;
 
     public SessionManager(Context context) {
-        prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        // Always use ApplicationContext so this singleton never leaks an Activity
+        prefs = context.getApplicationContext()
+                .getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         editor = prefs.edit();
+    }
+
+    public static synchronized SessionManager getInstance(Context context) {
+        if (instance == null) {
+            instance = new SessionManager(context);
+        }
+        return instance;
+    }
+
+    /** @deprecated Use getInstance(context) instead. */
+    @Deprecated
+    public SessionManager(Context context, boolean ignored) {
+        this(context);
     }
 
     // 🔹 EXISTING (unchanged)

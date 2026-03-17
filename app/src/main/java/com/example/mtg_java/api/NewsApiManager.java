@@ -9,6 +9,7 @@ import retrofit2.Response;
 public class NewsApiManager {
 
     private final NewsApi api;
+    private Call<NewsResponse> activeCall;
 
     public interface NewsCallback {
         void onSuccess(NewsResponse response);
@@ -20,8 +21,8 @@ public class NewsApiManager {
     }
 
     public void fetchNews(int limit, int skip, NewsCallback callback) {
-
-        api.getNews(limit, skip).enqueue(new Callback<NewsResponse>() {
+        activeCall = api.getNews(limit, skip);
+        activeCall.enqueue(new Callback<NewsResponse>() {
             @Override
             public void onResponse(Call<NewsResponse> call,
                                    Response<NewsResponse> response) {
@@ -35,8 +36,17 @@ public class NewsApiManager {
 
             @Override
             public void onFailure(Call<NewsResponse> call, Throwable t) {
-                callback.onError(t.getMessage());
+                if (!call.isCanceled()) {
+                    callback.onError(t.getMessage());
+                }
             }
         });
+    }
+
+    public void cancel() {
+        if (activeCall != null) {
+            activeCall.cancel();
+            activeCall = null;
+        }
     }
 }

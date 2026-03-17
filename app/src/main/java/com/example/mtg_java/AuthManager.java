@@ -32,10 +32,11 @@ public class AuthManager {
     private final OkHttpClient client;
     private final Handler mainHandler;
     private final Context context;
+    private Call activeGetUserCall;
 
     public AuthManager(Context context) {
-        this.context = context;
-        client = new OkHttpClient();
+        this.context = context.getApplicationContext();
+        client = com.example.mtg_java.api.ApiClient.getOkHttpClient();
         mainHandler = new Handler(Looper.getMainLooper());
     }
 
@@ -47,7 +48,7 @@ public class AuthManager {
     public void uploadAvatar(Uri imageUri, ImageUploadCallback callback) {
 
         try {
-            SessionManager session = new SessionManager(context);
+            SessionManager session = SessionManager.getInstance(context);
             String token = session.getToken();
 
             File file = FileUtils.getFile(context, imageUri);
@@ -142,7 +143,7 @@ public class AuthManager {
 
     public void deleteAccount(AuthCallback callback) {
 
-        SessionManager session = new SessionManager(context);
+        SessionManager session = SessionManager.getInstance(context);
         String token = session.getToken();
 
         Request request = new Request.Builder()
@@ -180,7 +181,7 @@ public class AuthManager {
 
     public void changePassword(String currentPassword, String newPassword, AuthCallback callback) {
 
-        SessionManager session = new SessionManager(context);
+        SessionManager session = SessionManager.getInstance(context);
         String token = session.getToken();
 
         JsonObject json = new JsonObject();
@@ -216,7 +217,7 @@ public class AuthManager {
 
                         if (response.code() == 401) {
 
-                            SessionManager session = new SessionManager(context);
+                            SessionManager session = SessionManager.getInstance(context);
                             session.clearSession();
 
                             mainHandler.post(() ->
@@ -237,7 +238,7 @@ public class AuthManager {
 
     public void updateProfile(String username, String email, String profileImage, AuthCallback callback) {
 
-        SessionManager session = new SessionManager(context);
+        SessionManager session = SessionManager.getInstance(context);
         String token = session.getToken();
 
         JsonObject json = new JsonObject();
@@ -290,7 +291,7 @@ public class AuthManager {
 
                         if (response.code() == 401) {
 
-                            SessionManager session = new SessionManager(context);
+                            SessionManager session = SessionManager.getInstance(context);
                             session.clearSession();
 
                             mainHandler.post(() ->
@@ -311,7 +312,7 @@ public class AuthManager {
 
     public void getCurrentUser(AuthCallback callback) {
 
-        SessionManager session = new SessionManager(context);
+        SessionManager session = SessionManager.getInstance(context);
         String token = session.getToken();
 
         Request request = new Request.Builder()
@@ -320,7 +321,8 @@ public class AuthManager {
                 .get()
                 .build();
 
-        client.newCall(request).enqueue(new Callback() {
+        activeGetUserCall = client.newCall(request);
+        activeGetUserCall.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
                 mainHandler.post(() ->
@@ -356,7 +358,7 @@ public class AuthManager {
                     } else {
 
                         if (response.code() == 401) {
-                            SessionManager session = new SessionManager(context);
+                            SessionManager session = SessionManager.getInstance(context);
                             session.clearSession();
 
                             mainHandler.post(() ->
@@ -371,6 +373,13 @@ public class AuthManager {
                 }
             }
         });
+    }
+
+    public void cancelGetCurrentUser() {
+        if (activeGetUserCall != null) {
+            activeGetUserCall.cancel();
+            activeGetUserCall = null;
+        }
     }
 
     private void postRequest(String url, String jsonBody, AuthCallback callback) {
@@ -415,7 +424,7 @@ public class AuthManager {
                                     ? user.get("profileImage").getAsString()
                                     : "";
 
-                            SessionManager session = new SessionManager(context);
+                            SessionManager session = SessionManager.getInstance(context);
                             session.saveToken(token);
                             session.saveUserId(userId);
                             session.saveUser(username, email);

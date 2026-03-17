@@ -40,7 +40,7 @@ public class CollectionFragment extends Fragment {
             @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState
     ) {
-        session = new SessionManager(requireContext());
+        session = SessionManager.getInstance(requireContext());
         api = new GroupApiManager();
 
         // 🔐 Not logged in → go to login
@@ -85,6 +85,7 @@ public class CollectionFragment extends Fragment {
         api.getGroups(session, new GroupApiManager.ListCallback() {
             @Override
             public void onSuccess(List<Group> result) {
+                if (!isAdded()) return;
                 groups.clear();
                 groups.addAll(result);
                 updateUI();
@@ -92,6 +93,7 @@ public class CollectionFragment extends Fragment {
 
             @Override
             public void onError(String msg) {
+                if (!isAdded()) return;
                 txtEmpty.setVisibility(View.VISIBLE);
                 Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
             }
@@ -102,11 +104,13 @@ public class CollectionFragment extends Fragment {
         api.createGroup(session, name, new GroupApiManager.ObjectCallback() {
             @Override
             public void onSuccess(Group g) {
-                loadGroups();   // refresh list
+                if (!isAdded()) return;
+                loadGroups();
             }
 
             @Override
             public void onError(String msg) {
+                if (!isAdded()) return;
                 Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
             }
         });
@@ -118,11 +122,13 @@ public class CollectionFragment extends Fragment {
         api.renameGroup(session, group.getId(), newName, new GroupApiManager.SimpleCallback() {
             @Override
             public void onDone() {
+                if (!isAdded()) return;
                 loadGroups();
             }
 
             @Override
             public void onError(String msg) {
+                if (!isAdded()) return;
                 Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
             }
         });
@@ -132,11 +138,13 @@ public class CollectionFragment extends Fragment {
         api.deleteGroup(session, group.getId(), new GroupApiManager.SimpleCallback() {
             @Override
             public void onDone() {
+                if (!isAdded()) return;
                 loadGroups();
             }
 
             @Override
             public void onError(String msg) {
+                if (!isAdded()) return;
                 Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
             }
         });

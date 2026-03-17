@@ -34,6 +34,7 @@ import com.example.mtg_java.scanner.RectangleDetector;
 import com.example.mtg_java.scanner.TFLiteImageClassifier;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import org.opencv.BuildConfig;
 import org.opencv.android.OpenCVLoader;
 
 import java.util.concurrent.ExecutorService;
@@ -116,25 +117,36 @@ public class ScanFragment extends Fragment {
 
         cameraExecutor = Executors.newSingleThreadExecutor();
 
-        MyApp app = (MyApp) requireActivity().getApplication();
-        classifier = app.getClassifierBlocking();
-        if (classifier == null) {
-            if (isAdded()) {
-                Toast.makeText(requireContext(), "Model not available", Toast.LENGTH_LONG).show();
-            }
-            return;
-        }
+        // Load classifier off the main thread — getClassifierBlocking() calls Future.get()
+        // which would otherwise stall onStart/onViewCreated on the UI thread.
+        cameraExecutor.execute(() -> {
+            MyApp app = (MyApp) requireActivity().getApplication();
+            TFLiteImageClassifier loaded = app.getClassifierBlocking();
 
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
-                == PackageManager.PERMISSION_GRANTED) {
-            previewView.post(this::startCamera);
-        } else {
-            ActivityCompat.requestPermissions(
-                    requireActivity(),
-                    new String[]{Manifest.permission.CAMERA},
-                    CAMERA_REQUEST_CODE
-            );
-        }
+            if (!isAdded()) return;
+
+            requireActivity().runOnUiThread(() -> {
+                if (!isAdded()) return;
+
+                if (loaded == null) {
+                    Toast.makeText(requireContext(), "Model not available", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                classifier = loaded;
+
+                if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
+                        == PackageManager.PERMISSION_GRANTED) {
+                    previewView.post(ScanFragment.this::startCamera);
+                } else {
+                    ActivityCompat.requestPermissions(
+                            requireActivity(),
+                            new String[]{Manifest.permission.CAMERA},
+                            CAMERA_REQUEST_CODE
+                    );
+                }
+            });
+        });
     }
 
     private void startCamera() {
@@ -234,7 +246,7 @@ public class ScanFragment extends Fragment {
                         Context ctx = getContext();
                         if (ctx == null) return;
 
-                        if (now - lastDebugSaveMs >= DEBUG_SAVE_MIN_INTERVAL_MS) {
+                        if (BuildConfig.DEBUG && now - lastDebugSaveMs >= DEBUG_SAVE_MIN_INTERVAL_MS) {
                             lastDebugSaveMs = now;
 
                             Bitmap debugBmp = com.example.mtg_java.scanner.DebugDraw.drawDebug(

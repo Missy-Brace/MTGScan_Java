@@ -17,9 +17,11 @@ import okhttp3.*;
 public class GroupApiManager {
 
     private static final String BASE_URL = "https://mtgscan1.onrender.com/api/collections";
-    private final OkHttpClient client = new OkHttpClient();
+    private final OkHttpClient client = com.example.mtg_java.api.ApiClient.getOkHttpClient();
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Gson gson = new Gson();
+
+    private okhttp3.Call activeGetGroupsCall;
 
     public interface ListCallback {
         void onSuccess(List<Group> groups);
@@ -42,7 +44,15 @@ public class GroupApiManager {
                 .addHeader("Authorization", "Bearer " + session.getToken())
                 .build();
 
-        client.newCall(req).enqueue(listCallback(cb));
+        activeGetGroupsCall = client.newCall(req);
+        activeGetGroupsCall.enqueue(listCallback(cb));
+    }
+
+    public void cancelGetGroups() {
+        if (activeGetGroupsCall != null) {
+            activeGetGroupsCall.cancel();
+            activeGetGroupsCall = null;
+        }
     }
 
     // POST /api/collections
@@ -128,6 +138,10 @@ public class GroupApiManager {
 
             @Override
             public void onResponse(Call call, Response r) throws IOException {
+                if (r.body() == null) {
+                    main.post(() -> cb.onError("Empty server response"));
+                    return;
+                }
                 String body = r.body().string();
                 try {
                     Group g = gson.fromJson(body, Group.class);
@@ -148,6 +162,10 @@ public class GroupApiManager {
 
             @Override
             public void onResponse(Call call, Response r) throws IOException {
+                if (r.body() == null) {
+                    main.post(() -> cb.onError("Empty server response"));
+                    return;
+                }
                 String body = r.body().string();
 
                 try {

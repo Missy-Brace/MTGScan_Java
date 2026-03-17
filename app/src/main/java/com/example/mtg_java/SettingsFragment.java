@@ -29,7 +29,7 @@ public class SettingsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
 
         authManager = new AuthManager(requireContext());
-        session = new SessionManager(requireContext());
+        session = SessionManager.getInstance(requireContext());
 
         txtUsername = view.findViewById(R.id.txtUsername);
         txtEmail = view.findViewById(R.id.txtEmail);
@@ -68,15 +68,15 @@ public class SettingsFragment extends Fragment {
         authManager.getCurrentUser(new AuthManager.AuthCallback() {
             @Override
             public void onSuccess(String token, String userId, String username, String email, String finalProfileImage) {
+                if (!isAdded()) return;
                 txtUsername.setText(username);
                 txtEmail.setText(email);
-
-                // also update session
                 session.saveUser(username, email);
             }
 
             @Override
             public void onError(String message) {
+                if (!isAdded()) return;
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
@@ -84,7 +84,7 @@ public class SettingsFragment extends Fragment {
 
     // 🔹 Logout
     private void logout() {
-        SessionManager session = new SessionManager(getContext());
+        SessionManager session = SessionManager.getInstance(getContext());
         session.clearSession();
 
         Intent intent = new Intent(getActivity(), LoginActivity.class);
@@ -106,9 +106,8 @@ public class SettingsFragment extends Fragment {
         authManager.deleteAccount(new AuthManager.AuthCallback() {
             @Override
             public void onSuccess(String token, String userId, String username, String email, String finalProfileImage) {
-
+                if (!isAdded()) return;
                 Toast.makeText(getContext(), "Account deleted", Toast.LENGTH_SHORT).show();
-
                 Intent intent = new Intent(getActivity(), LoginActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
@@ -116,6 +115,7 @@ public class SettingsFragment extends Fragment {
 
             @Override
             public void onError(String message) {
+                if (!isAdded()) return;
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
