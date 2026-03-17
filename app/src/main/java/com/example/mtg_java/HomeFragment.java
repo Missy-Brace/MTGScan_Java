@@ -1,5 +1,6 @@
 package com.example.mtg_java;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -19,10 +20,12 @@ import com.example.mtg_java.adapter.NewsAdapter;
 import com.example.mtg_java.api.NewsApiManager;
 import com.example.mtg_java.model.Group;
 import com.example.mtg_java.model.NewsResponse;
+import com.example.mtg_java.utils.LocalCache;
 import com.example.mtg_java.utils.SessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.example.mtg_java.model.News;
 
 public class HomeFragment extends Fragment {
 
@@ -36,6 +39,7 @@ public class HomeFragment extends Fragment {
     private GroupApiManager groupApi;
 
     private NewsAdapter adapter;
+    private LocalCache cache;
 
     @Nullable
     @Override
@@ -69,8 +73,8 @@ public class HomeFragment extends Fragment {
         );
 
         SessionManager sessionManager = SessionManager.getInstance(getContext());
-        tvUsername.setText("Hi, " + sessionManager.getUsername() + " 👋");
-        tvEmail.setText(sessionManager.getEmail());
+        //tvUsername.setText("Hi, " + sessionManager.getUsername() + " 👋");
+        //tvEmail.setText(sessionManager.getEmail());
 
         newsRecycler.setLayoutManager(
                 new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false)
@@ -83,9 +87,32 @@ public class HomeFragment extends Fragment {
         groupApi = new GroupApiManager();
         authManager = new AuthManager(requireContext());
 
-        loadNews();
-        loadStats();
-        loadAvatar();
+        cache = LocalCache.getInstance(requireContext());
+
+        // ── 1. Render cached data immediately (zero network wait) ──
+        List<News> cachedNews = cache.getNews();
+        if (cachedNews != null) {
+            adapter.updateData(cachedNews);  // shows instantly
+        }
+
+        // Cached avatar URL — Glide's disk cache means no network needed
+        // for the image itself even on first load after reinstall if the
+        // URL hasn't changed.
+        String cachedAvatar = cache.getProfileImageUrl();
+        if (cachedAvatar != null && imgAvatar != null) {
+            Glide.with(imgAvatar).load(cachedAvatar).circleCrop().into(imgAvatar);
+        }
+
+        // SessionManager already holds username/email from last login — use them
+        tvUsername.setText("Hi, " + sessionManager.getUsername() + " 👋");
+        tvEmail.setText(sessionManager.getEmail());
+
+        // ── 2. Refresh from network if online ─────────────────────
+        if (isNetworkAvailable()) {
+            loadNews();
+            loadStats();
+            loadAvatar();
+        }
 
         return view;
     }
@@ -95,16 +122,11 @@ public class HomeFragment extends Fragment {
             @Override
             public void onSuccess(NewsResponse response) {
                 if (!isAdded()) return;
-
-                requireActivity().runOnUiThread(() -> {
-                    adapter.updateData(response.getItems());
-                });
+                List<News> items = response.getItems();
+                cache.saveNews(items);             // update local cache
+                requireActivity().runOnUiThread(() -> adapter.updateData(items));
             }
-
-            @Override
-            public void onError(String msg) {
-                // optional: log
-            }
+            @Override public void onError(String msg) {}
         });
     }
 
@@ -161,6 +183,15 @@ public class HomeFragment extends Fragment {
         });
     }
 
+    private boolean isNetworkAvailable() {
+        android.net.ConnectivityManager cm =
+                (android.net.ConnectivityManager) requireContext()
+                        .getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) return false;
+        android.net.NetworkInfo info = cm.getActiveNetworkInfo();
+        return info != null && info.isConnected();
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -178,8 +209,11 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        // Reload if adapter is empty (fragment was recreated but callback dropped)
         if (adapter != null && adapter.getItemCount() == 0) {
-            loadNews();
+            List<News> cached = cache.getNews();
+            if (cached != null) adapter.updateData(cached);
+            if (isNetworkAvailable()) loadNews();
         }
     }
 }

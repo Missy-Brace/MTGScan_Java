@@ -7,10 +7,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.mtg_java.R;
 import com.example.mtg_java.adapter.NewsAdapter;
 import com.example.mtg_java.api.NewsApiManager;
 import com.example.mtg_java.model.NewsResponse;
+import com.example.mtg_java.utils.LocalCache;
+import com.example.mtg_java.model.News;
+import java.util.List;
 
 // FIX: Store the NewsApiManager as a field and cancel the active call in onDestroy().
 // Previously the manager was a local variable, making cancel() unreachable and leaving
@@ -32,8 +34,15 @@ public class NewsListActivity extends AppCompatActivity {
 
         btnBack.setOnClickListener(v -> finish());
 
-        api = new NewsApiManager(); // FIX: assign to field
-        loadNews();
+        LocalCache cache = LocalCache.getInstance(this);
+        List<News> cached = cache.getNews();
+        if (cached != null) {
+            recyclerNews.setAdapter(new NewsAdapter(cached, R.layout.item_news_vertical));
+        }
+
+        // Then refresh from network (NewsApiManager.fetchNews already saves to cache)
+        api = new NewsApiManager();
+        if (isNetworkAvailable()) loadNews();
     }
 
     private void loadNews() {
@@ -50,6 +59,13 @@ public class NewsListActivity extends AppCompatActivity {
             public void onError(String message) { }
         });
     }
+    private boolean isNetworkAvailable() {
+        android.net.ConnectivityManager cm =
+                (android.net.ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        if (cm == null) return false;
+        android.net.NetworkInfo info = cm.getActiveNetworkInfo();
+        return info != null && info.isConnected();
+    }
 
     @Override
     protected void onDestroy() {
@@ -57,4 +73,5 @@ public class NewsListActivity extends AppCompatActivity {
         // FIX: cancel the Retrofit call so the callback never fires after destroy
         if (api != null) api.cancel();
     }
+
 }

@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
-import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -17,6 +16,7 @@ import com.example.mtg_java.adapter.CardAdapter;
 import com.example.mtg_java.api.ApiClient;
 import com.example.mtg_java.api.ApiService;
 import com.example.mtg_java.model.Card;
+import com.example.mtg_java.utils.LocalCache;
 import com.example.mtg_java.utils.SessionManager;
 
 import java.util.ArrayList;
@@ -44,6 +44,7 @@ public class CollectionDetailActivity extends AppCompatActivity {
 
     // FIX: dirty flag — prevents redundant reloads on incidental resumes
     private boolean needsRefresh = true;
+    private LocalCache cache;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +54,7 @@ public class CollectionDetailActivity extends AppCompatActivity {
         groupId   = getIntent().getStringExtra("group_id");
         session   = new SessionManager(this);
         api       = new GroupApiManager();
+        cache = LocalCache.getInstance(this);
         groupName = getIntent().getStringExtra("group_name");
 
         txtTitle = findViewById(R.id.txtTitle);
@@ -62,6 +64,14 @@ public class CollectionDetailActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         adapter = new CardAdapter(this, cardList, groupId);
         recyclerView.setAdapter(adapter);
+
+        LocalCache cache = LocalCache.getInstance(this);
+        List<Card> cached = cache.getCards(groupId);
+        if (cached != null) {
+            cardList.addAll(cached);
+            adapter.notifyDataSetChanged();
+            setActionsEnabled(false);  // viewing only until network confirms
+        }
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
 
@@ -98,6 +108,8 @@ public class CollectionDetailActivity extends AppCompatActivity {
                         if (response.isSuccessful() && response.body() != null) {
                             cardList.clear();
                             cardList.addAll(response.body());
+                            cache.saveCards(groupId, response.body());
+                            setActionsEnabled(true);
                             adapter.notifyDataSetChanged();
                         }
                     }
@@ -175,5 +187,9 @@ public class CollectionDetailActivity extends AppCompatActivity {
                     Toast.makeText(CollectionDetailActivity.this, msg, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+    private void setActionsEnabled(boolean enabled) {
+        findViewById(R.id.btnAdd).setEnabled(enabled);
+        findViewById(R.id.btnMore).setEnabled(enabled);
     }
 }

@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mtg_java.model.Group;
+import com.example.mtg_java.utils.LocalCache;
 import com.example.mtg_java.utils.SessionManager;
 
 import java.util.ArrayList;
@@ -39,6 +40,8 @@ public class CollectionFragment extends Fragment {
 
     // FIX: dirty flag — reload only when something was mutated
     private boolean needsRefresh = true;
+    private LocalCache cache;
+
 
     @Nullable
     @Override
@@ -49,6 +52,7 @@ public class CollectionFragment extends Fragment {
     ) {
         session = SessionManager.getInstance(requireContext());
         api = new GroupApiManager();
+        cache = LocalCache.getInstance(requireContext());
 
         if (!session.isLoggedIn()) {
             startActivity(new Intent(requireContext(), LoginActivity.class));
@@ -81,7 +85,19 @@ public class CollectionFragment extends Fragment {
 
         view.findViewById(R.id.btnAdd).setOnClickListener(v -> showCreateDialog());
 
-        loadGroups(); // initial load on create
+        List<Group> cached = cache.getGroups();
+        if (cached != null) {
+            groups.addAll(cached);
+            updateUI();
+            // Disable add/mutate buttons while refreshing
+            setMutationEnabled(false);
+        }
+
+        if (isNetworkAvailable()) {
+            loadGroups();
+        } else {
+            setMutationEnabled(cached != null); // online required to mutate
+        }
         return view;
     }
 
@@ -104,6 +120,8 @@ public class CollectionFragment extends Fragment {
                 if (!isAdded()) return;
                 groups.clear();
                 groups.addAll(result);
+                cache.saveGroups(result);   // write cache
+                setMutationEnabled(true);   // re-enable after fresh data lands
                 updateUI();
             }
 
@@ -217,5 +235,17 @@ public class CollectionFragment extends Fragment {
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+    private void setMutationEnabled(boolean enabled) {
+        View btnAdd = getView() != null ? getView().findViewById(R.id.btnAdd) : null;
+        if (btnAdd != null) btnAdd.setEnabled(enabled);
+    }
+    private boolean isNetworkAvailable() {
+        android.net.ConnectivityManager cm =
+                (android.net.ConnectivityManager) requireContext()
+                        .getSystemService(android.content.Context.CONNECTIVITY_SERVICE);
+        if (cm == null) return false;
+        android.net.NetworkInfo info = cm.getActiveNetworkInfo();
+        return info != null && info.isConnected();
     }
 }

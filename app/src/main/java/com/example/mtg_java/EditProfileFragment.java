@@ -1,7 +1,10 @@
 package com.example.mtg_java;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -18,14 +21,21 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
+import com.example.mtg_java.utils.LocalCache;
+import com.example.mtg_java.utils.SessionManager;
 
 public class EditProfileFragment extends Fragment {
 
     private ImageView imgProfile;
     private EditText edtUsername, edtEmail;
+    private Button btnUpload, btnSave;
     private AuthManager authManager;
+    private LocalCache cache;
+    private SessionManager session;
+
     private Uri selectedImageUri;
-    private String currentProfileImageUrl = "";   // ✅ store existing image
+    private String currentProfileImageUrl = "";
+
     private ActivityResultLauncher<Intent> imagePickerLauncher;
 
     public EditProfileFragment() {}
@@ -36,56 +46,64 @@ public class EditProfileFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_edit_profile, container, false);
+
         authManager = new AuthManager(requireContext());
+        cache       = LocalCache.getInstance(requireContext());
+        session     = SessionManager.getInstance(requireContext());
 
         edtUsername = view.findViewById(R.id.edtUsername);
-        edtEmail = view.findViewById(R.id.edtEmail);
-        imgProfile = view.findViewById(R.id.imgProfile);
-        Button btnUpload = view.findViewById(R.id.btnUpload);
-        Button btnSave = view.findViewById(R.id.btnSave);
+        edtEmail    = view.findViewById(R.id.edtEmail);
+        imgProfile  = view.findViewById(R.id.imgProfile);
+        btnUpload   = view.findViewById(R.id.btnUpload);
+        btnSave     = view.findViewById(R.id.btnSave);
 
-        // ✅ GET USER ONCE (username, email, image)
-        authManager.getCurrentUser(new AuthManager.AuthCallback() {
-            @Override
-            public void onSuccess(String t, String id, String username, String email, String profileImage) {
+        // ── 1. Show cached data immediately ──────────────────────
+        edtUsername.setText(session.getUsername());
+        edtEmail.setText(session.getEmail());
 
-                if (isAdded()) {
+        String cachedAvatar = cache.getProfileImageUrl();
+        if (cachedAvatar != null && !cachedAvatar.isEmpty()) {
+            currentProfileImageUrl = cachedAvatar;
+            Glide.with(requireContext()).load(cachedAvatar).into(imgProfile);
+        }
+
+        // ── 2. Connectivity gate ──────────────────────────────────
+        boolean online = isNetworkAvailable();
+        setEditingEnabled(online);
+
+        if (online) {
+            // Refresh fields from server — may differ if changed on another device
+            authManager.getCurrentUser(new AuthManager.AuthCallback() {
+                @Override
+                public void onSuccess(String t, String id, String username,
+                                      String email, String profileImage) {
+                    if (!isAdded()) return;
                     requireActivity().runOnUiThread(() -> {
-
                         edtUsername.setText(username);
                         edtEmail.setText(email);
-
-                        // ✅ Save existing image
                         if (profileImage != null && !profileImage.isEmpty()) {
                             currentProfileImageUrl = profileImage;
-
-                            Glide.with(requireContext())
-                                    .load(profileImage)
-                                    .into(imgProfile);
+                            Glide.with(requireContext()).load(profileImage).into(imgProfile);
                         }
                     });
                 }
-            }
 
-            @Override
-            public void onError(String message) {
-                if (isAdded()) {
-                    Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                @Override
+                public void onError(String message) {
+                    // Suppress — cached values are already shown, editing is
+                    // still allowed because we confirmed online above.
                 }
-            }
-        });
+            });
+        }
 
-        // ✅ Image picker
+        // ── Image picker ──────────────────────────────────────────
         imagePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    if (result.getResultCode() == Activity.RESULT_OK &&
-                            result.getData() != null) {
-
+                    if (result.getResultCode() == Activity.RESULT_OK
+                            && result.getData() != null) {
                         selectedImageUri = result.getData().getData();
-                        Glide.with(requireContext())
-                                .load(selectedImageUri)
-                                .into(imgProfile);
+                        Glide.with(requireContext()).load(selectedImageUri).into(imgProfile);
                     }
                 }
         );
@@ -97,48 +115,36 @@ public class EditProfileFragment extends Fragment {
         );
 
         btnSave.setOnClickListener(v -> {
-
             String username = edtUsername.getText().toString().trim();
-            String email = edtEmail.getText().toString().trim();
+            String email    = edtEmail.getText().toString().trim();
 
             if (username.isEmpty() || email.isEmpty()) {
                 Toast.makeText(getContext(), "All fields required", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // ✅ If new image selected → upload first
             if (selectedImageUri != null) {
-
                 authManager.uploadAvatar(selectedImageUri, new AuthManager.ImageUploadCallback() {
                     @Override
                     public void onSuccess(String imageUrl) {
-
-                        if (isAdded()) {
-                            requireActivity().runOnUiThread(() -> {
-
-                                currentProfileImageUrl = imageUrl;
-
-                                Glide.with(requireContext())
-                                        .load(imageUrl)
-                                        .into(imgProfile);
-
-                                updateProfileNow(username, email, currentProfileImageUrl);
-                            });
-                        }
+                        if (!isAdded()) return;
+                        requireActivity().runOnUiThread(() -> {
+                            currentProfileImageUrl = imageUrl;
+                            cache.saveProfileImageUrl(imageUrl); // update cache on upload
+                            Glide.with(requireContext()).load(imageUrl).into(imgProfile);
+                            updateProfileNow(username, email, currentProfileImageUrl);
+                        });
                     }
 
                     @Override
                     public void onError(String message) {
-                        if (isAdded()) {
-                            requireActivity().runOnUiThread(() ->
-                                    Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show()
-                            );
-                        }
+                        if (!isAdded()) return;
+                        requireActivity().runOnUiThread(() ->
+                                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show()
+                        );
                     }
                 });
-
             } else {
-                // ✅ No new image → keep old one
                 updateProfileNow(username, email, currentProfileImageUrl);
             }
         });
@@ -147,28 +153,48 @@ public class EditProfileFragment extends Fragment {
     }
 
     private void updateProfileNow(String username, String email, String imageUrl) {
-
         authManager.updateProfile(username, email, imageUrl, new AuthManager.AuthCallback() {
-
             @Override
             public void onSuccess(String t, String id, String u, String e, String profileImage) {
-                if (isAdded()) {
-                    requireActivity().runOnUiThread(() -> {
-                        Toast.makeText(getContext(), "Profile updated", Toast.LENGTH_SHORT).show();
-                        requireActivity().getSupportFragmentManager().popBackStack();
-                    });
-                }
+                if (!isAdded()) return;
+                requireActivity().runOnUiThread(() -> {
+                    // Persist updated values to both caches
+                    session.saveUser(u, e);
+                    if (profileImage != null && !profileImage.isEmpty()) {
+                        cache.saveProfileImageUrl(profileImage);
+                    }
+                    Toast.makeText(getContext(), "Profile updated", Toast.LENGTH_SHORT).show();
+                    requireActivity().getSupportFragmentManager().popBackStack();
+                });
             }
 
             @Override
             public void onError(String message) {
-                if (isAdded()) {
-                    requireActivity().runOnUiThread(() ->
-                            Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show()
-                    );
-                }
+                if (!isAdded()) return;
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show()
+                );
             }
         });
+    }
+
+    private void setEditingEnabled(boolean enabled) {
+        edtUsername.setEnabled(enabled);
+        edtEmail.setEnabled(enabled);
+        btnUpload.setEnabled(enabled);
+        btnSave.setEnabled(enabled);
+
+        float alpha = enabled ? 1.0f : 0.5f;
+        btnUpload.setAlpha(alpha);
+        btnSave.setAlpha(alpha);
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager cm =
+                (ConnectivityManager) requireContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) return false;
+        NetworkInfo info = cm.getActiveNetworkInfo();
+        return info != null && info.isConnected();
     }
 
     private void openGallery() {
