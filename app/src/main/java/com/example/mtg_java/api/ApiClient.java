@@ -16,7 +16,7 @@ public class ApiClient {
         if (okHttpClient == null) {
             synchronized (ApiClient.class) {
                 if (okHttpClient == null) {
-                    // FIX: explicit timeouts — defaults are infinite wait
+
                     okHttpClient = new OkHttpClient.Builder()
                             .connectTimeout(10, TimeUnit.SECONDS)
                             .readTimeout(15, TimeUnit.SECONDS)
@@ -32,7 +32,7 @@ public class ApiClient {
         if (retrofit == null) {
             synchronized (ApiClient.class) {
                 if (retrofit == null) {
-                    // FIX: share the same OkHttpClient instance (connection pool reuse)
+
                     retrofit = new Retrofit.Builder()
                             .baseUrl(BASE_URL)
                             .client(getOkHttpClient())

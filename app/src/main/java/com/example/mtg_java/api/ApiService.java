@@ -58,7 +58,7 @@ public interface ApiService {
 
     @POST("/api/auth/login")
     Call<AuthResponse> login(@Body User user);
-    // ================= COLLECTION API =================
+
 
     // GET all collections
     @GET("/api/collections")
