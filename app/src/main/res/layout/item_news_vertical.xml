@@ -13,20 +13,20 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- IMAGE -->
+
         <ImageView
             android:id="@+id/imgNews"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop" />
 
-        <!-- DARK GRADIENT OVERLAY -->
+
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@drawable/bg_gradient_overlay"/>
 
-        <!-- TITLE -->
+
         <TextView
             android:id="@+id/tvTitle"
             android:layout_width="match_parent"

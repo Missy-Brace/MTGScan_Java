@@ -59,7 +59,7 @@ public class SignupActivity extends AppCompatActivity {
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
-        // 🔹 Username validation
+
         if (TextUtils.isEmpty(username)) {
             etUsername.setError("Username is required");
             etUsername.requestFocus();
@@ -72,7 +72,7 @@ public class SignupActivity extends AppCompatActivity {
             return;
         }
 
-        // 🔹 Email validation
+
         if (TextUtils.isEmpty(email)) {
             etEmail.setError("Email is required");
             etEmail.requestFocus();
@@ -85,7 +85,7 @@ public class SignupActivity extends AppCompatActivity {
             return;
         }
 
-        // 🔹 Password validation
+
         if (TextUtils.isEmpty(password)) {
             etPassword.setError("Password is required");
             etPassword.requestFocus();
@@ -118,7 +118,7 @@ public class SignupActivity extends AppCompatActivity {
             public void onError(String message) {
                 progressBar.setVisibility(View.GONE);
 
-                // 🔥 Improve duplicate account error
+
                 if (message.toLowerCase().contains("exists") ||
                         message.toLowerCase().contains("duplicate")) {
 

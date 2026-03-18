@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Top Bar -->
+
     <LinearLayout
         android:orientation="horizontal"
         android:gravity="center_vertical"
@@ -34,7 +34,7 @@
             android:layout_height="wrap_content"/>
     </LinearLayout>
 
-    <!-- News List -->
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerNews"
         android:layout_width="match_parent"

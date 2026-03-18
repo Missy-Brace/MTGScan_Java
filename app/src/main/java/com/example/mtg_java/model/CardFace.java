@@ -12,7 +12,7 @@ public class CardFace {
     private String loyalty;
     private String defense;
 
-    // Getters
+
     public String getName() { return name; }
     public String getType() { return type; }
     public String getManaCost() { return mana_cost; }
@@ -23,7 +23,7 @@ public class CardFace {
     public String getLoyalty() { return loyalty; }
     public String getDefense() { return defense; }
 
-    // Optional setters if you need
+
     public void setName(String name) { this.name = name; }
     public void setType(String type) { this.type = type; }
     public void setManaCost(String mana_cost) { this.mana_cost = mana_cost; }

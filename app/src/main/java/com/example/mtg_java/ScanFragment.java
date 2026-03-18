@@ -327,7 +327,7 @@ public class ScanFragment extends Fragment {
         return Bitmap.createBitmap(src, l, t, r - l, b - t);
     }
 
-    // -------- Stability helpers --------
+
     private Rect stabilizeRect(Rect r, long now) {
         if (stableRect == null || (now - stableRectTs) > STABLE_TTL_MS) {
             stableRect   = new Rect(r);

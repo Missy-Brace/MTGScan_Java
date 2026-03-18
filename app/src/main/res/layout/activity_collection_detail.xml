@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="#0F0F0F">
 
-    <!-- HEADER -->
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="56dp"
@@ -48,7 +48,7 @@
             android:tint="#AAAAAA"/>
     </LinearLayout>
 
-    <!-- CARDS GRID -->
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerCards"
         android:layout_width="match_parent"

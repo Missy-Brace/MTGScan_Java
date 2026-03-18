@@ -7,7 +7,7 @@
     android:padding="16dp"
     android:background="#1A1A1A">
 
-    <!-- Title (optional) -->
+
     <TextView
         android:id="@+id/txtTitle"
         android:layout_width="match_parent"
@@ -18,7 +18,7 @@
         android:textColor="#FFFFFF"
         android:paddingBottom="12dp" />
 
-    <!-- Rename -->
+
     <TextView
         android:id="@+id/btnRename"
         android:layout_width="match_parent"
@@ -28,13 +28,13 @@
         android:textColor="#FFFFFF"
         android:paddingVertical="12dp" />
 
-    <!-- Divider -->
+
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="#333333" />
 
-    <!-- Delete -->
+
     <TextView
         android:id="@+id/btnDelete"
         android:layout_width="match_parent"

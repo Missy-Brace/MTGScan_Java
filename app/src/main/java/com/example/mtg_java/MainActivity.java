@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // 🤖 Preload ML model
+        //  Preload ML model
         ((MyApp) getApplication()).preloadModelIfNeeded();
 
         setContentView(binding.getRoot());

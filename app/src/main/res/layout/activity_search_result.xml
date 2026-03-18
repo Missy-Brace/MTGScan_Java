@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:padding="16dp">
 
-    <!-- Top bar -->
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="56dp">
@@ -23,7 +23,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
 
-        <!-- PERFECTLY centered -->
+
 
         <TextView
             android:id="@+id/txtTitle"
@@ -70,7 +70,7 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Summary -->
+
     <TextView
         android:id="@+id/tvSummary"
         android:layout_width="match_parent"
@@ -91,7 +91,7 @@
         android:padding="24dp"/>
 
 
-    <!-- Results -->
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler"
         android:layout_width="match_parent"

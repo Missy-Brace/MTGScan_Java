@@ -26,7 +26,7 @@ public class SettingsFragment extends Fragment {
 
     private TextView txtUsername, txtEmail;
 
-    // Views we need to enable/disable based on connectivity
+
     private View rowProfile, rowChangePassword, rowDeleteAccount;
 
     @Override
@@ -46,24 +46,19 @@ public class SettingsFragment extends Fragment {
         rowChangePassword= view.findViewById(R.id.rowChangePassword);
         rowDeleteAccount = view.findViewById(R.id.rowDeleteAccount);
 
-        // ── 1. Show cached data immediately ──────────────────────
-        // SessionManager already holds the last-known username/email from login
-        // or the previous successful getCurrentUser() call.
+
         txtUsername.setText(session.getUsername());
         txtEmail.setText(session.getEmail());
 
-        // ── 2. Check connectivity and set action availability ─────
+
         boolean online = isNetworkAvailable();
         setEditingEnabled(online);
 
         if (online) {
-            // Refresh from server — updates display and writes back to SessionManager
+
             loadUserInfo();
         }
-        // Offline: cached values are already shown, editing rows are disabled,
-        // no toast or error — the user can see their data, just not change it.
 
-        // PROFILE — only reachable when online (row is disabled otherwise)
         rowProfile.setOnClickListener(v ->
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()

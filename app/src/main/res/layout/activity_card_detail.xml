@@ -6,7 +6,7 @@
     android:orientation="vertical"
     android:background="@android:color/black">
 
-    <!-- TOOLBAR -->
+
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
@@ -38,7 +38,7 @@
                     android:layout_height="match_parent"
                     android:scaleType="fitCenter" />
 
-                <!-- Flip bottom-right on card -->
+
                 <ImageButton
                     android:id="@+id/btnFlip"
                     android:layout_width="44dp"
@@ -50,7 +50,7 @@
                     app:tint="@color/orange" />
             </FrameLayout>
 
-            <!-- BASIC -->
+
             <LinearLayout
                 android:id="@+id/layoutBasic"
                 android:layout_width="match_parent"
@@ -74,7 +74,7 @@
                     android:layout_height="wrap_content"/>
             </LinearLayout>
 
-            <!-- TYPE & MANA -->
+
             <LinearLayout
                 android:id="@+id/layoutTypeMana"
                 android:layout_width="match_parent"
@@ -98,7 +98,7 @@
                     android:layout_height="wrap_content"/>
             </LinearLayout>
 
-            <!-- STATS -->
+
             <LinearLayout
                 android:id="@+id/layoutStats"
                 android:layout_width="match_parent"
@@ -122,7 +122,7 @@
                     android:layout_height="wrap_content"/>
             </LinearLayout>
 
-            <!-- RULES -->
+
             <LinearLayout
                 android:id="@+id/layoutRules"
                 android:layout_width="match_parent"
@@ -146,7 +146,7 @@
                     android:layout_height="wrap_content"/>
             </LinearLayout>
 
-            <!-- FLAVOR -->
+
             <LinearLayout
                 android:id="@+id/layoutFlavor"
                 android:layout_width="match_parent"
@@ -169,7 +169,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"/>
             </LinearLayout>
-            <!-- LEGALITIES -->
 
             <LinearLayout
                 android:id="@+id/layoutLegalities"
@@ -189,7 +188,7 @@
                     android:textSize="18sp"
                     android:textStyle="bold"/>
 
-                <!-- LEGAL -->
+
                 <TextView
                     android:id="@+id/tvLegal"
                     android:layout_width="wrap_content"
@@ -208,7 +207,7 @@
                     app:flexWrap="wrap"/>
 
 
-                <!-- NOT LEGAL -->
+
                 <TextView
                     android:id="@+id/tvNotLegal"
                     android:layout_width="wrap_content"
@@ -231,7 +230,7 @@
 
 
 
-            <!-- PRICE -->
+
             <LinearLayout
                 android:id="@+id/layoutPrice"
                 android:layout_width="match_parent"
@@ -283,7 +282,7 @@
 
 
 
-            <!-- PROGRESS -->
+
             <ProgressBar
                 android:id="@+id/progress"
                 android:layout_width="wrap_content"

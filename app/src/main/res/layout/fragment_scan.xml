@@ -7,7 +7,7 @@
     android:orientation="vertical"
     android:paddingTop="0dp">
 
-    <!-- Header -->
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -36,7 +36,7 @@
             app:tint="@android:color/white" />
     </LinearLayout>
 
-    <!-- Spacer -->
+
     <View
         android:layout_width="match_parent"
         android:layout_height="20dp" />
@@ -85,9 +85,7 @@
     </FrameLayout>
 
 
-    <!-- Helper text -->
 
-    <!-- Gallery button -->
 
     <TextView
         android:layout_width="match_parent"

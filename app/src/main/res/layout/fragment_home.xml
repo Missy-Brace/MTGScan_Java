@@ -13,7 +13,7 @@
         android:orientation="vertical"
         android:padding="5dp">
 
-        <!-- BIG PROFILE CONTAINER -->
+
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -29,14 +29,14 @@
                 android:orientation="vertical"
                 android:padding="20dp">
 
-                <!-- TOP ROW -->
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <!-- Avatar -->
+
                     <ImageView
                         android:id="@+id/imgAvatar"
                         android:layout_width="72dp"
@@ -45,7 +45,7 @@
                         android:background="@drawable/avatar_orange_border"
                         android:scaleType="centerCrop"/>
 
-                    <!-- Name + Email -->
+
                     <LinearLayout
                         android:layout_marginStart="16dp"
                         android:layout_weight="1"
@@ -72,7 +72,7 @@
                             android:layout_height="wrap_content"/>
                     </LinearLayout>
 
-                    <!-- Search Button -->
+
                     <ImageView
                         android:id="@+id/btnSearch"
                         android:layout_width="44dp"
@@ -84,7 +84,7 @@
                 </LinearLayout>
 
 
-                <!-- STATS ROW -->
+
                 <LinearLayout
                     android:layout_marginTop="24dp"
                     android:layout_width="match_parent"
@@ -92,7 +92,7 @@
                     android:orientation="horizontal"
                     android:weightSum="2">
 
-                    <!-- Collections -->
+
                     <LinearLayout
                         android:layout_weight="1"
                         android:layout_width="0dp"
@@ -122,7 +122,7 @@
                     </LinearLayout>
 
 
-                    <!-- Cards -->
+
                     <LinearLayout
                         android:layout_weight="1"
                         android:layout_width="0dp"
@@ -157,7 +157,7 @@
         </androidx.cardview.widget.CardView>
 
 
-        <!-- NEWS HEADER -->
+
         <LinearLayout
             android:layout_marginTop="28dp"
             android:layout_width="match_parent"

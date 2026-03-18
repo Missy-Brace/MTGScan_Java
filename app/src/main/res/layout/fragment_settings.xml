@@ -9,7 +9,7 @@
         android:orientation="vertical"
         android:padding="20dp">
 
-        <!-- TITLE -->
+
         <TextView
             android:text="Settings"
             android:textColor="#FFFFFF"
@@ -20,7 +20,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
-        <!-- PROFILE LABEL -->
+
         <TextView
             android:text="Profile"
             android:textColor="#AAAAAA"
@@ -29,14 +29,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
-        <!-- PROFILE CARD -->
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="@drawable/bg_settings_card">
 
-            <!-- PROFILE ROW -->
+
             <LinearLayout
                 android:id="@+id/rowProfile"
                 android:layout_width="match_parent"
@@ -86,7 +86,7 @@
                 android:layout_height="1dp"
                 android:background="@drawable/divider_settings"/>
 
-            <!-- CHANGE PASSWORD -->
+
             <LinearLayout
                 android:id="@+id/rowChangePassword"
                 android:layout_width="match_parent"
@@ -118,7 +118,7 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- DATA SECTION -->
+
         <TextView
             android:text="Data"
             android:textColor="#AAAAAA"
@@ -159,7 +159,7 @@
                 android:layout_height="18dp"/>
         </LinearLayout>
 
-        <!-- ACCOUNT SECTION -->
+
         <TextView
             android:text="Account"
             android:textColor="#AAAAAA"

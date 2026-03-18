@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Header -->
+
     <RelativeLayout
         android:padding="16dp"
         android:layout_width="match_parent"
@@ -41,7 +41,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <!-- Card Text & Set -->
+
             <TextView style="@style/SectionTitle"
                 android:text="Card Text &amp; Set"
                 android:layout_marginBottom="12dp"/>
@@ -87,7 +87,7 @@
             <View style="@style/Divider"
                 android:layout_marginBottom="20dp"/>
 
-            <!-- Color & Mana -->
+
             <TextView style="@style/SectionTitle"
                 android:text="Color &amp; Mana"
                 android:layout_marginBottom="12dp"/>
@@ -110,7 +110,7 @@
 
 
 
-            <!-- Color Identity -->
+
             <TextView style="@style/Label"
                 android:text="Color Identity"
                 android:layout_marginBottom="9dp"/>
@@ -139,7 +139,7 @@
             <View style="@style/Divider"
                 />
 
-            <!-- Rarity & Artist -->
+
             <TextView style="@style/SectionTitle"
                 android:text="Rarity &amp; Artist"
                 android:layout_marginBottom="12dp"/>
@@ -209,7 +209,7 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- Bottom bar -->
+
     <LinearLayout
         android:padding="12dp"
         android:gravity="center_vertical"

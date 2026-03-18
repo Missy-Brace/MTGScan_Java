@@ -11,7 +11,7 @@
         android:orientation="vertical"
         android:padding="28dp">
 
-        <!-- Title -->
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -31,7 +31,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="40dp"/>
 
-        <!-- Email -->
+
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -60,7 +60,7 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Password -->
+
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -92,7 +92,7 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Login Button -->
+
         <Button
             android:id="@+id/btnLogin"
             android:layout_width="match_parent"
@@ -104,7 +104,7 @@
             android:layout_marginBottom="25dp"
             android:elevation="0dp"/>
 
-        <!-- Go to Signup -->
+
         <TextView
             android:id="@+id/btnGoSignup"
             android:layout_width="wrap_content"
@@ -114,7 +114,7 @@
             android:textSize="14sp"
             android:layout_gravity="center"/>
 
-        <!-- Progress -->
+
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"

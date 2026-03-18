@@ -7,7 +7,7 @@
     android:paddingTop="16dp"
     android:background="@android:color/black">
 
-    <!-- HEADER -->
+
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -33,7 +33,7 @@
     </RelativeLayout>
 
 
-    <!-- SEARCH + FILTER ROW -->
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -63,7 +63,7 @@
             app:tint="@color/white" />
     </LinearLayout>
 
-    <!-- CARD GRID -->
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"

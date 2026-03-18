@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="#0F0F0F">
 
-    <!-- HEADER -->
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="56dp"
@@ -31,7 +31,7 @@
             android:textColorHint="#777"
             android:background="@android:color/transparent"/>
 
-        <!-- Filter button — matches the style used in fragment_browse.xml -->
+
         <ImageView
             android:id="@+id/btnFilter"
             android:layout_width="40dp"
@@ -44,7 +44,7 @@
 
     </LinearLayout>
 
-    <!-- ACTIVE FILTER SUMMARY — hidden until filters are applied -->
+
     <TextView
         android:id="@+id/tvFilterSummary"
         android:layout_width="match_parent"
@@ -57,7 +57,7 @@
         android:ellipsize="end"
         android:visibility="gone"/>
 
-    <!-- FRAGMENT HOLDER -->
+
     <FrameLayout
         android:id="@+id/container"
         android:layout_width="match_parent"

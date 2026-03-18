@@ -35,7 +35,7 @@ public class SearchResultActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search_result);
 
-        // UI
+
         recyclerView = findViewById(R.id.recycler);
         tvEmpty = findViewById(R.id.tvEmpty);
         tvSummary = findViewById(R.id.tvSummary);
@@ -46,13 +46,13 @@ public class SearchResultActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         api = ApiClient.getClient().create(ApiService.class);
 
-        // Back
+
         btnBack.setOnClickListener(v -> finish());
 
-        // Refine -> go back to filter
+
         btnRefine.setOnClickListener(v -> finish());
 
-        // Show summary from filter
+
         String summary = getIntent().getStringExtra("summary");
         tvSummary.setText(summary);
 

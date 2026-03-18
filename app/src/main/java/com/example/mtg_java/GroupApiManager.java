@@ -56,7 +56,6 @@ public class GroupApiManager {
     }
 
     // POST /api/collections
-    // POST /api/collections
     public void createGroup(SessionManager session, String name, ObjectCallback cb) {
         RequestBody body = RequestBody.create(
                 gson.toJson(new NameBody(name)),

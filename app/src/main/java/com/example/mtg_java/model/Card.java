@@ -6,7 +6,7 @@ import java.util.Map;
 
 public class Card {
 
-    // ===== YOUR ORIGINAL FIELDS =====
+
     @SerializedName("universal_id")
     private String universal_id;
 
@@ -17,7 +17,7 @@ public class Card {
 
     private String type;
     private String subtype;
-    // ===== MORE FROM API =====
+
 
 
 
@@ -47,7 +47,7 @@ public class Card {
     @SerializedName("current_price")
     private CurrentPrice current_price;
 
-    // ===== NEW FIELDS (FROM API) =====
+
     private String artist;
     private String language;
     private String layout;
@@ -86,10 +86,10 @@ public class Card {
     @SerializedName("display_face_index")
     private Integer display_face_index;
 
-    // ✅ No-arg constructor
+
     public Card() {}
 
-    // ===== YOUR ORIGINAL GETTERS =====
+
     public String getUniversalId() { return universal_id; }
     public String getName() { return name; }
     public String getImageUrl() { return image_url; }
@@ -142,7 +142,7 @@ public class Card {
     public String getUpdatedAt() { return updated_at; }
     public Integer getDisplayFaceIndex() { return display_face_index; }
 
-    // ===== YOUR ORIGINAL SETTERS =====
+
     public void setUniversalId(String universal_id) { this.universal_id = universal_id; }
     public void setName(String name) { this.name = name; }
 
@@ -162,7 +162,7 @@ public class Card {
     public void setFaces(List<CardFace> faces) { this.faces = faces; }
     public void setCurrentPrice(CurrentPrice current_price) { this.current_price = current_price; }
 
-    // ===== NEW SETTERS =====
+
     public void setArtist(String artist) { this.artist = artist; }
     public void setLanguage(String language) { this.language = language; }
     public void setLayout(String layout) { this.layout = layout; }

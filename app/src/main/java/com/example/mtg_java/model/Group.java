@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Group {
 
-    private String _id;              // ← REQUIRED
+    private String _id;
     private String name;
     private int cardCount;
     private List<String> cardIds = new ArrayList<>();
