@@ -5,10 +5,7 @@ import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-// FIX 1: Added connect/read/write timeouts so stalled server requests do not hang
-//         the app indefinitely.
-// FIX 2: Wrapped lazy-init blocks in synchronized to prevent duplicate construction
-//         if two threads hit getClient() simultaneously at cold start.
+
 public class ApiClient {
 
     private static volatile Retrofit retrofit = null;

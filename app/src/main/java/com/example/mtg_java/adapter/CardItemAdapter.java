@@ -40,8 +40,7 @@ public class CardItemAdapter extends RecyclerView.Adapter<CardItemAdapter.ViewHo
         CardResponse.CardItem c = list.get(i);
         h.txtName.setText(c.name != null ? c.name : "-");
 
-        // FIX: guard against null imageUrl before handing to Glide.
-        // A null URL would silently create a failed Glide request on every bind.
+
         if (c.imageUrl != null && !c.imageUrl.isEmpty()) {
             Glide.with(context).load(c.imageUrl).into(h.imgCard);
         }

@@ -28,12 +28,10 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsVH> {
         this.layoutId = layoutId;
     }
 
-    // FIX: updateData() was replacing the list reference but never calling
-    // notifyDataSetChanged(), so the RecyclerView would remain blank until
-    // something else triggered a redraw. Added the notification here.
+
     public void updateData(List<News> newList) {
         this.newsList = newList != null ? newList : new java.util.ArrayList<>();
-        notifyDataSetChanged(); // FIX: was missing — RecyclerView never refreshed
+        notifyDataSetChanged();
     }
 
     @NonNull

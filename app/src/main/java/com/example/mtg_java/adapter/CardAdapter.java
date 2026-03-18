@@ -28,10 +28,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-// FIX: ApiService was being created via Retrofit.create() on every single remove tap
-// (inside removeCardFromGroup). Retrofit.create() uses reflection to generate a proxy
-// class and is expensive. Store one ApiService instance as a field, created once in
-// the constructor, and reuse it for all subsequent calls.
 public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder> {
 
     private final Context context;
@@ -42,7 +38,7 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
     private String groupId;
     private SessionManager session;
 
-    // FIX: single ApiService instance instead of per-call Retrofit.create()
+
     private ApiService apiService;
 
     public interface OnCardClickListener {
