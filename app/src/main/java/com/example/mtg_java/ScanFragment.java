@@ -13,6 +13,8 @@ import android.view.Surface;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.camera.core.CameraSelector;
@@ -23,7 +25,6 @@ import androidx.camera.core.UseCaseGroup;
 import androidx.camera.core.ViewPort;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
@@ -32,8 +33,8 @@ import com.example.mtg_java.scanner.ImageProxyUtils;
 import com.example.mtg_java.scanner.RectangleDetector;
 import com.example.mtg_java.scanner.TFLiteImageClassifier;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.squareup.picasso.BuildConfig;
 
+import org.opencv.BuildConfig;
 import org.opencv.android.OpenCVLoader;
 
 import java.util.concurrent.ExecutorService;
@@ -48,7 +49,12 @@ import java.util.concurrent.Executors;
 public class ScanFragment extends Fragment {
     private static final boolean IS_DEBUG = BuildConfig.DEBUG;
 
-    private static final int CAMERA_REQUEST_CODE = 100;
+    // FIX (issue 2): Replaced the deprecated requestPermissions() / onRequestPermissionsResult()
+    // approach with ActivityResultLauncher. The old Fragment.onRequestPermissionsResult() is no
+    // longer called by AndroidX Activity 1.2+ — results are routed to the Activity only, so the
+    // fragment override was silently never invoked and the camera stayed black after first grant.
+    // ActivityResultLauncher is the correct modern API and is guaranteed to fire in the fragment.
+    private ActivityResultLauncher<String> cameraPermissionLauncher;
 
     private ExecutorService cameraExecutor;
     private TFLiteImageClassifier classifier;
@@ -70,6 +76,14 @@ public class ScanFragment extends Fragment {
     private static final int CROP_R = 700;
     private static final int CROP_B = 720;
 
+    // Model input resolution fed to model.tflite via Bitmap.createScaledBitmap().
+    // The crop region is always landscape (CROP_R-CROP_L=680 > CROP_B-CROP_T=500)
+    // so MODEL_W must always be greater than MODEL_H.
+    // Original resolution: 564 × 411 (landscape, width > height)
+    // CHANGE (issue 5): updated to 308 × 224 to match the new model.tflite input
+    // layer. To revert, restore MODEL_W = 564 and MODEL_H = 411.
+    // Location: ScanFragment.java — constants block, used in the analyzer lambda
+    // at the line: resized = Bitmap.createScaledBitmap(rawCrop, MODEL_W, MODEL_H, true)
     private static final int MODEL_W = 564;
     private static final int MODEL_H = 411;
 
@@ -97,6 +111,24 @@ public class ScanFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         previewView = view.findViewById(R.id.previewView);
+
+        // Register the permission launcher before any async work starts.
+        // ActivityResultLauncher must be registered during fragment initialisation
+        // (before onStart), not inside a callback — hence it lives here, not inside
+        // the cameraExecutor.execute() block below.
+        cameraPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                granted -> {
+                    // This fires on the main thread after the user responds to the dialog.
+                    if (granted && classifier != null && previewView != null) {
+                        previewView.post(this::startCamera);
+                    } else if (!granted && isAdded()) {
+                        Toast.makeText(requireContext(),
+                                "Camera permission is required to scan cards",
+                                Toast.LENGTH_LONG).show();
+                    }
+                }
+        );
 
         view.findViewById(R.id.btnSearch).setOnClickListener(v -> {
             if (!isAdded()) return;
@@ -137,11 +169,10 @@ public class ScanFragment extends Fragment {
                         == PackageManager.PERMISSION_GRANTED) {
                     previewView.post(ScanFragment.this::startCamera);
                 } else {
-                    ActivityCompat.requestPermissions(
-                            requireActivity(),
-                            new String[]{Manifest.permission.CAMERA},
-                            CAMERA_REQUEST_CODE
-                    );
+                    // Launch the permission request via the modern ActivityResultLauncher.
+                    // When the user responds, the lambda registered above will fire and
+                    // call startCamera() if granted.
+                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA);
                 }
             });
         });

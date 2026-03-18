@@ -31,7 +31,7 @@ public class MyApp extends Application {
                         this,
                         "model.tflite",
                         "labels.txt",
-                        564, 411,
+                        564, 411, //old 564, 411
                         false
                 );
             } catch (Exception e) {

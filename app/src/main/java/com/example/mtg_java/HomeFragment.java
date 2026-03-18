@@ -179,11 +179,16 @@ public class HomeFragment extends Fragment {
                 if (!isAdded()) return;
                 requireActivity().runOnUiThread(() -> {
                     if (profileImage != null && !profileImage.isEmpty()) {
+                        // Fresh URL from server — save it and display it.
                         cache.saveProfileImageUrl(profileImage);
                         Glide.with(imgAvatar).load(profileImage).circleCrop().into(imgAvatar);
-                    } else {
-                        imgAvatar.setImageResource(android.R.drawable.sym_def_app_icon);
                     }
+                    // FIX (issue 1): if the server returns no profile image we do nothing.
+                    // The cached URL was already loaded from LocalCache before this call ran,
+                    // so overwriting with a default icon here would erase the cached avatar
+                    // on every launch for users whose server record has no image set.
+                    // The fallback icon is only shown at startup when the cache is also empty
+                    // (handled in onCreateView where cachedAvatar == null).
                 });
             }
             @Override public void onError(String message) {}
