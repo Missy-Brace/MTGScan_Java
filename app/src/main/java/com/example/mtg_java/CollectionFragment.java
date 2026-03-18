@@ -24,10 +24,7 @@ import com.example.mtg_java.utils.SessionManager;
 import java.util.ArrayList;
 import java.util.List;
 
-// FIX: Added a dirty-flag (needsRefresh) so onResume() only triggers a network
-// round-trip when data has actually changed (after a create/rename/delete mutation).
-// The original triggered a full reload every time the screen became visible —
-// including soft pauses like app-switching or screen unlock.
+
 public class CollectionFragment extends Fragment {
 
     private RecyclerView recycler;
@@ -38,9 +35,10 @@ public class CollectionFragment extends Fragment {
     private SessionManager session;
     private GroupApiManager api;
 
-    // FIX: dirty flag — reload only when something was mutated
+
     private boolean needsRefresh = true;
     private LocalCache cache;
+
 
 
     @Nullable
@@ -71,7 +69,7 @@ public class CollectionFragment extends Fragment {
                 Intent i = new Intent(requireContext(), CollectionDetailActivity.class);
                 i.putExtra("group_id",   group.getId());
                 i.putExtra("group_name", group.getName());
-                startActivity(i);
+                startActivityForResult(i, 1001);
             }
 
             @Override
@@ -89,46 +87,57 @@ public class CollectionFragment extends Fragment {
         if (cached != null) {
             groups.addAll(cached);
             updateUI();
-            // Disable add/mutate buttons while refreshing
+
             setMutationEnabled(false);
         }
 
         if (isNetworkAvailable()) {
             loadGroups();
         } else {
-            setMutationEnabled(cached != null); // online required to mutate
+            setMutationEnabled(cached != null);
         }
         return view;
+    }
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 1001 && resultCode == getActivity().RESULT_OK) {
+            if (data != null && data.getBooleanExtra("changed", false)) {
+                needsRefresh = true;
+                loadGroups();
+            }
+        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        // FIX: only reload when a mutation has been performed, not on every resume
+
         if (needsRefresh) {
             loadGroups();
         }
     }
 
-    // ===================== API =====================
+
 
     private void loadGroups() {
-        needsRefresh = false; // FIX: clear the flag before the call
+        needsRefresh = false;
         api.getGroups(session, new GroupApiManager.ListCallback() {
             @Override
             public void onSuccess(List<Group> result) {
                 if (!isAdded()) return;
                 groups.clear();
                 groups.addAll(result);
-                cache.saveGroups(result);   // write cache
-                setMutationEnabled(true);   // re-enable after fresh data lands
+                cache.saveGroups(result);
+                setMutationEnabled(true);
                 updateUI();
             }
 
             @Override
             public void onError(String msg) {
                 if (!isAdded()) return;
-                needsRefresh = true; // FIX: allow retry on next resume if load failed
+                needsRefresh = true;
                 if (txtEmpty != null) txtEmpty.setVisibility(View.VISIBLE);
                 Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
             }
@@ -140,7 +149,7 @@ public class CollectionFragment extends Fragment {
             @Override
             public void onSuccess(Group g) {
                 if (!isAdded()) return;
-                needsRefresh = true; // FIX: mark dirty so onResume reloads
+                needsRefresh = true;
                 loadGroups();
             }
 
@@ -186,7 +195,7 @@ public class CollectionFragment extends Fragment {
         });
     }
 
-    // ===================== UI =====================
+
 
     private void updateUI() {
         adapter.setGroups(groups);

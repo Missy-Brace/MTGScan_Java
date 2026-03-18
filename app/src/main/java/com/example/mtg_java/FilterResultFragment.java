@@ -22,9 +22,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-// FIX: Store the in-flight Retrofit Call as a field and cancel it in onDestroyView().
-// The original had no cancellation at all — the callback would fire against a detached
-// fragment, which is a common source of crashes and stale-data bugs.
+
 public class FilterResultFragment extends Fragment {
 
     RecyclerView recycler;
@@ -33,7 +31,7 @@ public class FilterResultFragment extends Fragment {
 
     String name, text, type, artist;
 
-    // FIX: store call reference so we can cancel it
+
     private Call<CardResponse> activeCall;
 
     @Override
@@ -61,7 +59,7 @@ public class FilterResultFragment extends Fragment {
     private void load() {
         ApiService api = ApiClient.getClient().create(ApiService.class);
 
-        // FIX: cancel any previous in-flight call before starting a new one
+    
         if (activeCall != null && !activeCall.isCanceled()) {
             activeCall.cancel();
         }
@@ -96,7 +94,7 @@ public class FilterResultFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        // FIX: cancel in-flight call to prevent callback firing on detached fragment
+
         if (activeCall != null) {
             activeCall.cancel();
             activeCall = null;

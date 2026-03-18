@@ -26,9 +26,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-// FIX: Added dirty-flag pattern (needsRefresh) so onResume() only reloads the card
-// list when the user has added or removed a card. The original called loadGroupCards()
-// unconditionally on every resume — including app-switching and screen unlock.
+
 public class CollectionDetailActivity extends AppCompatActivity {
 
     String groupId;
@@ -42,7 +40,7 @@ public class CollectionDetailActivity extends AppCompatActivity {
     TextView txtTitle;
     GroupApiManager api;
 
-    // FIX: dirty flag — prevents redundant reloads on incidental resumes
+
     private boolean needsRefresh = true;
     private LocalCache cache;
 
@@ -70,7 +68,7 @@ public class CollectionDetailActivity extends AppCompatActivity {
         if (cached != null) {
             cardList.addAll(cached);
             adapter.notifyDataSetChanged();
-            setActionsEnabled(false);  // viewing only until network confirms
+            setActionsEnabled(false);
         }
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
@@ -156,7 +154,14 @@ public class CollectionDetailActivity extends AppCompatActivity {
         api.renameGroup(session, groupId, newName, new GroupApiManager.SimpleCallback() {
             @Override
             public void onDone() {
-                if (!isFinishing()) txtTitle.setText(newName);
+                if (!isFinishing()) {
+                    txtTitle.setText(newName);
+
+                    // Notify parent fragment/activity
+                    Intent intent = new Intent();
+                    intent.putExtra("changed", true);
+                    setResult(RESULT_OK, intent);
+                }
             }
 
             @Override
@@ -166,6 +171,7 @@ public class CollectionDetailActivity extends AppCompatActivity {
             }
         });
     }
+
 
     private void showDeleteDialog() {
         new AlertDialog.Builder(this)
@@ -179,7 +185,14 @@ public class CollectionDetailActivity extends AppCompatActivity {
     private void deleteCollection() {
         api.deleteGroup(session, groupId, new GroupApiManager.SimpleCallback() {
             @Override
-            public void onDone() { finish(); }
+            public void onDone() {
+                // Notify parent fragment/activity
+                Intent intent = new Intent();
+                intent.putExtra("changed", true);
+                setResult(RESULT_OK, intent);
+
+                finish();
+            }
 
             @Override
             public void onError(String msg) {

@@ -35,10 +35,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-// FIX 1: Added isFinishing()/isDestroyed() guards in all Retrofit callbacks to
-//         prevent callbacks from running against a destroyed Activity context.
-// FIX 2: bindLegalities() now guards against re-adding chips if already populated,
-//         preventing redundant inflation when showCard() is called more than once.
+
 public class CardDetailActivity extends AppCompatActivity {
 
     private ImageView imgCard;
@@ -335,8 +332,7 @@ public class CardDetailActivity extends AppCompatActivity {
         FlexboxLayout layoutLegal    = findViewById(R.id.layoutLegal);
         FlexboxLayout layoutNotLegal = findViewById(R.id.layoutNotLegal);
 
-        // FIX: only build chips once — re-adding them on every showCard() call
-        // (e.g. triggered by face-flip) inflated unnecessary views every time.
+
         if (layoutLegal.getChildCount() > 0 || layoutNotLegal.getChildCount() > 0) return;
 
         List<String> legalFormats = card.getLegalFormats();

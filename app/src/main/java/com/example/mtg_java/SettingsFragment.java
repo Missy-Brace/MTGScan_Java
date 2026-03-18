@@ -67,7 +67,7 @@ public class SettingsFragment extends Fragment {
                         .commit()
         );
 
-        // CHANGE PASSWORD
+
         rowChangePassword.setOnClickListener(v ->
                 requireActivity().getSupportFragmentManager()
                         .beginTransaction()
@@ -76,16 +76,16 @@ public class SettingsFragment extends Fragment {
                         .commit()
         );
 
-        // LOGOUT — always available regardless of connectivity
+
         view.findViewById(R.id.rowLogout).setOnClickListener(v -> logout());
 
-        // DELETE ACCOUNT — only when online (row is disabled otherwise)
+
         rowDeleteAccount.setOnClickListener(v -> confirmDelete());
 
         return view;
     }
 
-    // ── API ───────────────────────────────────────────────────────
+
 
     private void loadUserInfo() {
         authManager.getCurrentUser(new AuthManager.AuthCallback() {
@@ -93,10 +93,10 @@ public class SettingsFragment extends Fragment {
             public void onSuccess(String token, String userId, String username,
                                   String email, String finalProfileImage) {
                 if (!isAdded()) return;
-                // Update display with fresh server data
+
                 txtUsername.setText(username);
                 txtEmail.setText(email);
-                // Persist so next offline visit sees up-to-date values
+
                 session.saveUser(username, email);
                 if (finalProfileImage != null && !finalProfileImage.isEmpty()) {
                     cache.saveProfileImageUrl(finalProfileImage);
@@ -105,14 +105,12 @@ public class SettingsFragment extends Fragment {
 
             @Override
             public void onError(String message) {
-                // Suppress the toast — cached data is already displayed and the
-                // user has not taken any action that would expect a response.
-                // Errors here are connectivity-related and not actionable.
+
             }
         });
     }
 
-    // ── UI helpers ────────────────────────────────────────────────
+
 
     /**
      * Enable or disable the three rows that require a live server connection.
@@ -141,11 +139,11 @@ public class SettingsFragment extends Fragment {
         return info != null && info.isConnected();
     }
 
-    // ── Actions ───────────────────────────────────────────────────
+
 
     private void logout() {
         session.clearSession();
-        cache.clear(); // clear cached data so it doesn't leak to the next account
+        cache.clear();
 
         Intent intent = new Intent(getActivity(), LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

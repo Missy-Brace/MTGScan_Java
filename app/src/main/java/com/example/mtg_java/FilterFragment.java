@@ -15,23 +15,14 @@ import androidx.fragment.app.Fragment;
 import java.util.ArrayList;
 import java.util.List;
 
-// REFACTOR: FilterFragment no longer hard-codes a launch of SearchResultActivity.
-// It now delivers results through a FilterListener callback interface, making it
-// reusable in any context — the standalone browse flow and the collection add flow.
-//
-// Callers register a listener via setFilterListener() before the fragment is shown.
-// If no listener is set the fragment behaves as before (standalone search).
-//
-// The "mode" argument (ARG_MODE) controls the label on the action button:
-//   "search"     → "Search" → navigates to SearchResultActivity (original behaviour)
-//   "collection" → "Apply"  → fires the listener callback with the selected params
+
 public class FilterFragment extends Fragment {
 
     public static final String ARG_MODE       = "mode";
     public static final String MODE_SEARCH     = "search";
     public static final String MODE_COLLECTION = "collection";
 
-    // ── Callback interface ─────────────────────────────────────────────────────
+
 
     public interface FilterListener {
         void onFiltersApplied(
@@ -52,7 +43,7 @@ public class FilterFragment extends Fragment {
         this.filterListener = listener;
     }
 
-    // ── Factory helpers ────────────────────────────────────────────────────────
+
 
     public static FilterFragment forSearch() {
         FilterFragment f = new FilterFragment();
@@ -71,7 +62,7 @@ public class FilterFragment extends Fragment {
         return f;
     }
 
-    // ── Views ──────────────────────────────────────────────────────────────────
+
 
     EditText fName, fText, fType, fArtist, fMana;
     ToggleButton cW, cU, cB, cR, cG;
@@ -105,12 +96,12 @@ public class FilterFragment extends Fragment {
         rMythic   = v.findViewById(R.id.rMythic);
         tvSummary = v.findViewById(R.id.tvSummary);
 
-        // ── Close ──────────────────────────────────────────────────────────────
+
         v.findViewById(R.id.btnClose).setOnClickListener(b ->
                 requireActivity().getSupportFragmentManager().popBackStack()
         );
 
-        // ── Action button — label and behaviour depend on mode ─────────────────
+
         String mode = getArguments() != null
                 ? getArguments().getString(ARG_MODE, MODE_SEARCH)
                 : MODE_SEARCH;
@@ -120,7 +111,7 @@ public class FilterFragment extends Fragment {
 
         btnSearch.setOnClickListener(b -> {
             if (mode.equals(MODE_COLLECTION)) {
-                // Deliver params to the caller fragment via callback
+
                 if (filterListener != null) {
                     String manaStr = fMana.getText().toString().trim();
                     Integer mana = manaStr.isEmpty() ? null : Integer.parseInt(manaStr);
@@ -137,7 +128,7 @@ public class FilterFragment extends Fragment {
                 }
                 requireActivity().getSupportFragmentManager().popBackStack();
             } else {
-                // Original behaviour — launch SearchResultActivity
+
                 android.content.Intent i =
                         new android.content.Intent(getActivity(), SearchResultActivity.class);
                 i.putExtra("name",   fName.getText().toString());
@@ -165,7 +156,7 @@ public class FilterFragment extends Fragment {
             updateSummary();
         });
 
-        // ── Live summary ───────────────────────────────────────────────────────
+
         View.OnClickListener updateClick  = b -> updateSummary();
         TextWatcher          updateChange = new SimpleWatcher(this::updateSummary);
 
@@ -182,7 +173,7 @@ public class FilterFragment extends Fragment {
         return v;
     }
 
-    // ── Summary ────────────────────────────────────────────────────────────────
+
 
     private void updateSummary() {
         ArrayList<String> parts = new ArrayList<>();
@@ -216,7 +207,7 @@ public class FilterFragment extends Fragment {
         tvSummary.setText(parts.isEmpty() ? "No filters selected" : String.join(" · ", parts));
     }
 
-    // ── Helpers ────────────────────────────────────────────────────────────────
+
 
     private ArrayList<String> getColors() {
         ArrayList<String> l = new ArrayList<>();

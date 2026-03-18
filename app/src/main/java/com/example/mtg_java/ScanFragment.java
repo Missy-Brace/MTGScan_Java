@@ -40,20 +40,11 @@ import org.opencv.android.OpenCVLoader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-// FIX 1: BuildConfig.DEBUG was resolving to org.opencv.BuildConfig (wrong class),
-//         meaning debug bitmap saves may run in release builds. Now uses a local
-//         constant backed by the app's own BuildConfig.
-// FIX 2: Intermediate bitmaps (frame, rawCrop, resized) are now recycled at the
-//         end of every analysis tick to prevent a GC storm from ~60 multi-MB
-//         allocations per second at the default tick rate.
+
 public class ScanFragment extends Fragment {
     private static final boolean IS_DEBUG = BuildConfig.DEBUG;
 
-    // FIX (issue 2): Replaced the deprecated requestPermissions() / onRequestPermissionsResult()
-    // approach with ActivityResultLauncher. The old Fragment.onRequestPermissionsResult() is no
-    // longer called by AndroidX Activity 1.2+ — results are routed to the Activity only, so the
-    // fragment override was silently never invoked and the camera stayed black after first grant.
-    // ActivityResultLauncher is the correct modern API and is guaranteed to fire in the fragment.
+
     private ActivityResultLauncher<String> cameraPermissionLauncher;
 
     private ExecutorService cameraExecutor;
@@ -76,14 +67,7 @@ public class ScanFragment extends Fragment {
     private static final int CROP_R = 700;
     private static final int CROP_B = 720;
 
-    // Model input resolution fed to model.tflite via Bitmap.createScaledBitmap().
-    // The crop region is always landscape (CROP_R-CROP_L=680 > CROP_B-CROP_T=500)
-    // so MODEL_W must always be greater than MODEL_H.
-    // Original resolution: 564 × 411 (landscape, width > height)
-    // CHANGE (issue 5): updated to 308 × 224 to match the new model.tflite input
-    // layer. To revert, restore MODEL_W = 564 and MODEL_H = 411.
-    // Location: ScanFragment.java — constants block, used in the analyzer lambda
-    // at the line: resized = Bitmap.createScaledBitmap(rawCrop, MODEL_W, MODEL_H, true)
+
     private static final int MODEL_W = 564;
     private static final int MODEL_H = 411;
 
@@ -112,10 +96,7 @@ public class ScanFragment extends Fragment {
 
         previewView = view.findViewById(R.id.previewView);
 
-        // Register the permission launcher before any async work starts.
-        // ActivityResultLauncher must be registered during fragment initialisation
-        // (before onStart), not inside a callback — hence it lives here, not inside
-        // the cameraExecutor.execute() block below.
+
         cameraPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
                 granted -> {
@@ -169,9 +150,7 @@ public class ScanFragment extends Fragment {
                         == PackageManager.PERMISSION_GRANTED) {
                     previewView.post(ScanFragment.this::startCamera);
                 } else {
-                    // Launch the permission request via the modern ActivityResultLauncher.
-                    // When the user responds, the lambda registered above will fire and
-                    // call startCamera() if granted.
+
                     cameraPermissionLauncher.launch(Manifest.permission.CAMERA);
                 }
             });
@@ -281,8 +260,7 @@ public class ScanFragment extends Fragment {
                         }
 
                     } finally {
-                        // FIX: recycle intermediate bitmaps to prevent multi-MB allocation
-                        // accumulation at ~20fps (60+ bitmap objects/second without this)
+
                         if (rawCrop != null && !rawCrop.isRecycled())  rawCrop.recycle();
                         if (resized  != null && !resized.isRecycled()) resized.recycle();
                         if (frame    != null && !frame.isRecycled())   frame.recycle();
